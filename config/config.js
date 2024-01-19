@@ -8,8 +8,6 @@ var mysqlConnection = mysql.createConnection({
 });
 
 mysqlConnection.connect((err) => {
-//  if (err) throw new Error(err);
-//  console.log(`CONEXION EXITOSA A LA BASE DE DATOS`);
 if (err) {throw new Error(err);
   console.log(err);
 }else{

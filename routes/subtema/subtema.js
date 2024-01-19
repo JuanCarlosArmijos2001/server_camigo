@@ -66,10 +66,29 @@ router.post("/activarDesactivarSubtema", [], (req, res) => {
     });
 });
 
+// router.post("/listarSubtemas", (req, res) => {
+//     let idTema = req.body.idTema;
+//     const obtenerTitulo = "SELECT * FROM subtema WHERE idTema = ?;";
+//     sql.ejecutarResSQL(obtenerTitulo, [idTema], (resultado) => {
+//         if (resultado.length > 0) {
+//             return res
+//                 .status(200)
+//                 .send({ en: 1, m: "Subtemas obtenidos", subtemas: resultado });
+//         } else {
+//             return res.status(200).send({ en: -1, m: "No se encontraron subtemas" });
+//         }
+//     });
+// });
+
 router.post("/listarSubtemas", (req, res) => {
     let idTema = req.body.idTema;
-    const obtenerTitulo = "SELECT * FROM subtema WHERE idTema = ?;";
-    sql.ejecutarResSQL(obtenerTitulo, [idTema], (resultado) => {
+    let obtenerSubtemas;
+    if (req.body.mensaje === "subtemasActivos") {
+        obtenerSubtemas = "SELECT * FROM subtema WHERE idTema = ? AND estado = 1;";
+    } else {
+        obtenerSubtemas = "SELECT * FROM subtema WHERE idTema = ?;";
+    }
+    sql.ejecutarResSQL(obtenerSubtemas, [idTema], (resultado) => {
         if (resultado.length > 0) {
             return res
                 .status(200)
@@ -79,6 +98,7 @@ router.post("/listarSubtemas", (req, res) => {
         }
     });
 });
+
 
 
 module.exports = router;

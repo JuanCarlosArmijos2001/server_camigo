@@ -64,18 +64,36 @@ router.post("/activarDesactivarTema", [], (req, res) => {
   });
 });
 
-router.get("/listarTemas", (req, res) => {
-    const obtenerTitulo = "SELECT * FROM tema;";
-    sql.ejecutarResSQL(obtenerTitulo, [], (resultado) => {
-      if (resultado.length > 0) {
-        return res
-          .status(200)
-          .send({ en: 1, m: "Temas obtenidos", temas: resultado });
-      } else {
-        return res.status(200).send({ en: -1, m: "No se encontraron temas" });
-      }
-    });
+// router.get("/listarTemas", (req, res) => {
+//     sql.ejecutarResSQL("SELECT * FROM tema;", [], (resultado) => {
+//       if (resultado.length > 0) {
+//         return res
+//           .status(200)
+//           .send({ en: 1, m: "Temas obtenidos", temas: resultado });
+//       } else {
+//         return res.status(200).send({ en: -1, m: "No se encontraron temas" });
+//       }
+//     });
+//   });
+
+
+router.post("/listarTemas", (req, res) => {
+  let obtenerTitulo;
+  if (req.body.mensaje === "temasActivos") {
+    obtenerTitulo = "SELECT * FROM tema WHERE estado = 1;";
+  } else {
+    obtenerTitulo = "SELECT * FROM tema;";
+  }
+  sql.ejecutarResSQL(obtenerTitulo, [], (resultado) => {
+    if (resultado.length > 0) {
+      return res
+        .status(200)
+        .send({ en: 1, m: "Temas obtenidos", temas: resultado });
+    } else {
+      return res.status(200).send({ en: -1, m: "No se encontraron temas" });
+    }
   });
-  
+});
+
 
 module.exports = router;

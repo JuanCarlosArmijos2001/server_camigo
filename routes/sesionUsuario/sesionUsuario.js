@@ -1,20 +1,37 @@
 const router = require("express").Router();
 const sql = require("../../config/config");
+const generarToken = require('../../middlewares/verificarToken').generarToken;
+const verificarToken = require('../../middlewares/verificarToken').verificarToken;
 const md5 = require('md5');
 
 router.post('/autenticacion', (req, res) => {
     const { email, clave } = req.body;
-    const obtenerCuenta = "SELECT * FROM cuenta WHERE email = ?;";
+    const obtenerUsuario = "SELECT u.id AS usuario_id, u.persona_id, u.cuenta_id, u.rol_id, c.clave FROM usuario u JOIN cuenta c ON u.cuenta_id = c.id WHERE c.email = ?;";
 
-    sql.ejecutarResSQL(obtenerCuenta, [email], (resultado) => {
+    sql.ejecutarResSQL(obtenerUsuario, [email], (resultado) => {
         if (resultado.length > 0) {
+            const claveEncriptadaGuardada = resultado[0].clave;
             const claveEncriptadaIngresada = md5(clave);
 
-            // Compara la clave encriptada ingresada con la clave encriptada almacenada
-            if (claveEncriptadaIngresada === resultado[0].clave) {
-                // Incluye el externalId en la respuesta
-                const { externalId, ...usuarioInfo } = resultado[0];
-                return res.status(200).send({ en: 1, m: "Autenticación exitosa", usuario: usuarioInfo, externalId });
+            if (claveEncriptadaIngresada === claveEncriptadaGuardada) {
+                const userId = resultado[0].usuario_id;
+                const token = generarToken({ userId });
+                const horaCreacion = new Date();
+                const horaExpiracion = new Date();
+                horaExpiracion.setHours(horaExpiracion.getHours() + 3);
+
+                verificarToken(token, (err, decoded) => {
+                    if (err) {
+                        return res.status(401).send({ en: -1, m: "Token no válido" });
+                    }
+
+                    const estado = 1; // Puedes modificar el estado según tus necesidades
+                    const insertarSesion = "INSERT INTO sesion (usuario_id, token, hora_creacion, hora_expiracion, estado) VALUES (?, ?, ?, ?, ?);";
+                    sql.ejecutarResSQL(insertarSesion, [userId, token, horaCreacion, horaExpiracion, estado], (insertarResultado) => {
+                        console.log('Token generado y sesión creada:', token);
+                        return res.status(200).send({ en: 1, m: "Autenticación exitosa", token });
+                    });
+                });
             } else {
                 return res.status(200).send({ en: -1, m: "Credenciales inválidas" });
             }
@@ -24,8 +41,46 @@ router.post('/autenticacion', (req, res) => {
     });
 });
 
+router.post("/detalleSesion", (req, res) => {
+    const { userId } = req.body;
+    if (!userId) {
+        return res.status(400).send({ en: -1, m: "Se requiere el ID del usuario en el cuerpo de la solicitud." });
+    }
+
+    // Primero, obtenemos el persona_id, cuenta_id y rol_id asociados al usuario
+    const obtenerIdsUsuario = "SELECT persona_id, cuenta_id, rol_id FROM usuario WHERE id = ?;";
+
+    sql.ejecutarResSQL(obtenerIdsUsuario, [userId], (resultado) => {
+        if (resultado.length > 0) {
+            const { persona_id, cuenta_id, rol_id } = resultado[0];
+
+            // Segundo, obtenemos los detalles de la persona
+            const obtenerDetallesPersona = "SELECT * FROM persona WHERE id = ?;";
+            sql.ejecutarResSQL(obtenerDetallesPersona, [persona_id], (detallesPersona) => {
+                // Y también los detalles de la cuenta
+                const obtenerDetallesCuenta = "SELECT id, email FROM cuenta WHERE id = ?;";
+                sql.ejecutarResSQL(obtenerDetallesCuenta, [cuenta_id], (detallesCuenta) => {
+                    // Tercero, obtenemos los detalles del rol
+                    const obtenerDetallesRol = "SELECT * FROM rol WHERE id = ?;";
+                    sql.ejecutarResSQL(obtenerDetallesRol, [rol_id], (detallesRol) => {
+                        return res.status(200).send({
+                            en: 1,
+                            m: "Detalles de la persona, cuenta y rol obtenidos",
+                            detallesPersona: detallesPersona[0],
+                            detallesCuenta: detallesCuenta[0],
+                            detallesRol: detallesRol[0],
+                        });
+                    });
+                });
+            });
+        } else {
+            return res.status(200).send({ en: -1, m: "No se encontraron detalles para el usuario" });
+        }
+    });
+});
+
 router.post('/registro', (req, res) => {
-    const { nombres, apellidos, email, clave, tipoRol, external_id } = req.body;
+    const { nombres, apellidos, email, clave, tipoRol } = req.body;
 
     // Verificar si el email ya está registrado
     const verificarEmail = "SELECT * FROM cuenta WHERE email = ?;";
@@ -40,20 +95,27 @@ router.post('/registro', (req, res) => {
                 // Obtener el ID de la cuenta recién creada
                 const idCuenta = resultadoCuenta.insertId;
 
-                // Obtener el ID del rol basado en el tipo de rol proporcionado
-                const obtenerIdRol = "SELECT id FROM rol WHERE tipo = ?;";
-                sql.ejecutarResSQL(obtenerIdRol, [tipoRol], (resultadoIdRol) => {
-                    if (resultadoIdRol.length > 0) {
-                        const idRol = resultadoIdRol[0].id;
+                // Crear un nuevo registro en la tabla persona
+                const crearPersona = "INSERT INTO persona (nombres, apellidos) VALUES (?, ?);";
+                sql.ejecutarResSQL(crearPersona, [nombres, apellidos], (resultadoPersona) => {
+                    // Obtener el ID de la persona recién creada
+                    const idPersona = resultadoPersona.insertId;
 
-                        // Crear un nuevo usuario
-                        const crearUsuario = "INSERT INTO persona (nombres, apellidos, idCuenta, idRol, external_id) VALUES (?, ?, ?, ?, ?);";
-                        sql.ejecutarResSQL(crearUsuario, [nombres, apellidos, idCuenta, idRol, external_id], (resultadoUsuario) => {
-                            return res.status(200).send({ en: 1, m: "Registro exitoso" });
-                        });
-                    } else {
-                        return res.status(200).send({ en: -1, m: "Tipo de rol no válido" });
-                    }
+                    // Obtener el ID del rol basado en el tipo de rol proporcionado
+                    const obtenerIdRol = "SELECT id FROM rol WHERE tipo = ?;";
+                    sql.ejecutarResSQL(obtenerIdRol, [tipoRol], (resultadoIdRol) => {
+                        if (resultadoIdRol.length > 0) {
+                            const idRol = resultadoIdRol[0].id;
+
+                            // Crear un nuevo usuario
+                            const crearUsuario = "INSERT INTO usuario (persona_id, cuenta_id, rol_id) VALUES (?, ?, ?);";
+                            sql.ejecutarResSQL(crearUsuario, [idPersona, idCuenta, idRol], (resultadoUsuario) => {
+                                return res.status(200).send({ en: 1, m: "Registro exitoso" });
+                            });
+                        } else {
+                            return res.status(200).send({ en: -1, m: "Tipo de rol no válido" });
+                        }
+                    });
                 });
             });
         }

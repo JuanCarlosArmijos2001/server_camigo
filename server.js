@@ -1,4 +1,5 @@
 const express = require('express')
+const jwt = require('jsonwebtoken');
 const app = express()
 const port = 5000
 
@@ -6,6 +7,7 @@ const port = 5000
 require('dotenv').config();
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 //Cofiguraciones de servidor
 app.use(bodyParser.json({ limit: "1mb" }));
@@ -39,6 +41,4 @@ const server = app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 });
 
-//app = aplicación
-//server = levanta la aplicación
 module.exports={server,app};

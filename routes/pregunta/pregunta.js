@@ -15,7 +15,7 @@ router.post("/registrarPregunta", [], (req, res) => {
         "INSERT INTO pregunta (enunciado, opcion_a, opcion_b, opcion_c, opcion_d, respuesta_correcta, justificacion, estado, idEjercicio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
     sql.ejecutarResSQL(
         registrarPregunta,
-        [enunciado, opcion_a, opcion_b, opcion_c, opcion_d, respuesta_correcta, justificacion,  estado, idEjercicio],
+        [enunciado, opcion_a, opcion_b, opcion_c, opcion_d, respuesta_correcta, justificacion, estado, idEjercicio],
         (resultado) => {
             if (resultado["affectedRows"] > 0)
                 return res.status(200).send({
@@ -68,10 +68,29 @@ router.post("/activarDesactivarPregunta", [], (req, res) => {
     });
 });
 
+// router.post("/listarPreguntas", (req, res) => {
+//     let idEjercicio = req.body.idEjercicio;
+//     const obtenerPregunta = "SELECT * FROM pregunta WHERE idEjercicio = ?;";
+//     sql.ejecutarResSQL(obtenerPregunta, [idEjercicio], (resultado) => {
+//         if (resultado.length > 0) {
+//             return res
+//                 .status(200)
+//                 .send({ en: 1, m: "Preguntas obtenidas", preguntas: resultado });
+//         } else {
+//             return res.status(200).send({ en: -1, m: "No se encontraron preguntas" });
+//         }
+//     });
+// });
+
 router.post("/listarPreguntas", (req, res) => {
     let idEjercicio = req.body.idEjercicio;
-    const obtenerPregunta = "SELECT * FROM pregunta WHERE idEjercicio = ?;";
-    sql.ejecutarResSQL(obtenerPregunta, [idEjercicio], (resultado) => {
+    let obtenerPreguntas;
+    if (req.body.mensaje === "preguntasActivas") {
+        obtenerPreguntas = "SELECT * FROM pregunta WHERE idEjercicio = ? AND estado = 1;";
+    } else {
+        obtenerPreguntas = "SELECT * FROM pregunta WHERE idEjercicio = ?;";
+    }
+    sql.ejecutarResSQL(obtenerPreguntas, [idEjercicio], (resultado) => {
         if (resultado.length > 0) {
             return res
                 .status(200)
@@ -81,6 +100,7 @@ router.post("/listarPreguntas", (req, res) => {
         }
     });
 });
+
 
 
 module.exports = router;

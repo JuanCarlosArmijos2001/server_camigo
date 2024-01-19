@@ -64,19 +64,37 @@ router.post("/activarDesactivarEjercicio", [], (req, res) => {
     });
 });
 
+// router.post("/listarEjercicios", (req, res) => {
+//     let idSubtema = req.body.idSubtema;
+//     const obtenerTitulo = "SELECT * FROM ejercicio WHERE idSubtema = ?;";
+//     sql.ejecutarResSQL(obtenerTitulo, [idSubtema], (resultado) => {
+//         if (resultado.length > 0) {
+//             return res
+//                 .status(200)
+//                 .send({ en: 1, m: "Subtemas obtenidos", ejercicios: resultado });
+//         } else {
+//             return res.status(200).send({ en: -1, m: "No se encontraron subtemas" });
+//         }
+//     });
+// });
+
 router.post("/listarEjercicios", (req, res) => {
     let idSubtema = req.body.idSubtema;
-    const obtenerTitulo = "SELECT * FROM ejercicio WHERE idSubtema = ?;";
-    sql.ejecutarResSQL(obtenerTitulo, [idSubtema], (resultado) => {
+    let obtenerEjercicios;
+        if (req.body.mensaje === "ejerciciosActivos") {
+            obtenerEjercicios = "SELECT * FROM ejercicio WHERE idSubtema = ? AND estado = 1;";
+        } else {
+            obtenerEjercicios = "SELECT * FROM ejercicio WHERE idSubtema = ?;";
+        }
+    sql.ejecutarResSQL(obtenerEjercicios, [idSubtema], (resultado) => {
         if (resultado.length > 0) {
             return res
                 .status(200)
-                .send({ en: 1, m: "Subtemas obtenidos", ejercicios: resultado });
+                .send({ en: 1, m: "Ejercicios obtenidos", ejercicios: resultado });
         } else {
-            return res.status(200).send({ en: -1, m: "No se encontraron subtemas" });
+            return res.status(200).send({ en: -1, m: "No se encontraron ejercicios" });
         }
     });
 });
-
 
 module.exports = router;
