@@ -8,8 +8,10 @@ router.post("/registrarEjercicio", [], (req, res) => {
     let solucion = req.body.solucion;
     let estado = 1;
     let idSubtema = req.body.idSubtema;
+
     const registrarEjercicio =
         "INSERT INTO ejercicio (titulo, instrucciones, restricciones, solucion, estado, idSubtema) VALUES (?, ?, ?, ?, ?, ?);";
+
     sql.ejecutarResSQL(
         registrarEjercicio,
         [titulo, instrucciones, restricciones, solucion, estado, idSubtema],
@@ -17,13 +19,14 @@ router.post("/registrarEjercicio", [], (req, res) => {
             if (resultado["affectedRows"] > 0)
                 return res.status(200).send({
                     en: 1,
-                    m: "Se registro el ejercicio con éxito",
+                    m: "Se registró el ejercicio con éxito",
                     idEjercicio: resultado["insertId"],
                 });
-            return res.status(200).send({ en: -1, m: "No se pudo registrar ejercicio" });
+            return res.status(200).send({ en: -1, m: "No se pudo registrar el ejercicio" });
         }
     );
 });
+
 
 router.post("/editarEjercicio", [], (req, res) => {
     let id = req.body.id;
@@ -64,28 +67,15 @@ router.post("/activarDesactivarEjercicio", [], (req, res) => {
     });
 });
 
-// router.post("/listarEjercicios", (req, res) => {
-//     let idSubtema = req.body.idSubtema;
-//     const obtenerTitulo = "SELECT * FROM ejercicio WHERE idSubtema = ?;";
-//     sql.ejecutarResSQL(obtenerTitulo, [idSubtema], (resultado) => {
-//         if (resultado.length > 0) {
-//             return res
-//                 .status(200)
-//                 .send({ en: 1, m: "Subtemas obtenidos", ejercicios: resultado });
-//         } else {
-//             return res.status(200).send({ en: -1, m: "No se encontraron subtemas" });
-//         }
-//     });
-// });
 
 router.post("/listarEjercicios", (req, res) => {
     let idSubtema = req.body.idSubtema;
     let obtenerEjercicios;
-        if (req.body.mensaje === "ejerciciosActivos") {
-            obtenerEjercicios = "SELECT * FROM ejercicio WHERE idSubtema = ? AND estado = 1;";
-        } else {
-            obtenerEjercicios = "SELECT * FROM ejercicio WHERE idSubtema = ?;";
-        }
+    if (req.body.mensaje === "ejerciciosActivos") {
+        obtenerEjercicios = "SELECT * FROM ejercicio WHERE idSubtema = ? AND estado = 1;";
+    } else {
+        obtenerEjercicios = "SELECT * FROM ejercicio WHERE idSubtema = ?;";
+    }
     sql.ejecutarResSQL(obtenerEjercicios, [idSubtema], (resultado) => {
         if (resultado.length > 0) {
             return res

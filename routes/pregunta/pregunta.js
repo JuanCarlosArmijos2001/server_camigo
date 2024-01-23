@@ -11,8 +11,10 @@ router.post("/registrarPregunta", [], (req, res) => {
     let justificacion = req.body.justificacion;
     let estado = 1;
     let idEjercicio = req.body.idEjercicio;
+
     const registrarPregunta =
         "INSERT INTO pregunta (enunciado, opcion_a, opcion_b, opcion_c, opcion_d, respuesta_correcta, justificacion, estado, idEjercicio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+
     sql.ejecutarResSQL(
         registrarPregunta,
         [enunciado, opcion_a, opcion_b, opcion_c, opcion_d, respuesta_correcta, justificacion, estado, idEjercicio],
@@ -20,13 +22,14 @@ router.post("/registrarPregunta", [], (req, res) => {
             if (resultado["affectedRows"] > 0)
                 return res.status(200).send({
                     en: 1,
-                    m: "Se registro la pregunta con éxito",
+                    m: "Se registró la pregunta con éxito",
                     idPregunta: resultado["insertId"],
                 });
             return res.status(200).send({ en: -1, m: "No se pudo registrar la pregunta" });
         }
     );
 });
+
 
 router.post("/editarPregunta", [], (req, res) => {
     let id = req.body.id;
@@ -68,19 +71,6 @@ router.post("/activarDesactivarPregunta", [], (req, res) => {
     });
 });
 
-// router.post("/listarPreguntas", (req, res) => {
-//     let idEjercicio = req.body.idEjercicio;
-//     const obtenerPregunta = "SELECT * FROM pregunta WHERE idEjercicio = ?;";
-//     sql.ejecutarResSQL(obtenerPregunta, [idEjercicio], (resultado) => {
-//         if (resultado.length > 0) {
-//             return res
-//                 .status(200)
-//                 .send({ en: 1, m: "Preguntas obtenidas", preguntas: resultado });
-//         } else {
-//             return res.status(200).send({ en: -1, m: "No se encontraron preguntas" });
-//         }
-//     });
-// });
 
 router.post("/listarPreguntas", (req, res) => {
     let idEjercicio = req.body.idEjercicio;

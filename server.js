@@ -29,14 +29,21 @@ let temaRouter = require('./routes/tema/tema');
 let subtemaRouter = require('./routes/subtema/subtema.js');
 let ejercicioRouter = require('./routes/ejercicio/ejercicio.js');
 let preguntaRouter = require('./routes/pregunta/pregunta.js');
+let comentarioRouter = require('./routes/comentario/comentario.js');
 let sesionUsuario = require('./routes/sesionUsuario/sesionUsuario.js');
+let historial = require('./routes/historial/historial.js');
+
+
 
 //Uso de las rutas
 app.use('/temas', temaRouter);
 app.use('/subtemas', subtemaRouter);
 app.use('/ejercicios', ejercicioRouter);
 app.use('/preguntas', preguntaRouter);
+app.use('/comentarios', comentarioRouter);
 app.use('/sesionUsuario', sesionUsuario);
+app.use('/historial', historial);
+
 const server = app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 });

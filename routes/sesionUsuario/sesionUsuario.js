@@ -122,4 +122,44 @@ router.post('/registro', (req, res) => {
     });
 });
 
+
+router.put('/editarUsuario', (req, res) => {
+    const { userId, nombres, apellidos, email, clave } = req.body;
+
+    // Verificar si el usuario existe
+    const verificarUsuario = "SELECT * FROM usuario WHERE id = ?;";
+
+    sql.ejecutarResSQL(verificarUsuario, [userId], (resultadoUsuario) => {
+        if (resultadoUsuario.length === 0) {
+            return res.status(404).send({ en: -1, m: "Usuario no encontrado" });
+        }
+
+        // Actualizar la cuenta asociada al usuario, incluida la clave si se proporciona
+        let actualizarCuenta;
+        let parametrosCuenta;
+
+        if (clave) {
+            // Si se proporciona una nueva clave, actualizar también la clave
+            actualizarCuenta = "UPDATE cuenta SET email = ?, clave = ? WHERE id = ?;";
+            const claveEncriptada = md5(clave);
+            parametrosCuenta = [email, claveEncriptada, resultadoUsuario[0].cuenta_id];
+        } else {
+            // Si no se proporciona una nueva clave, solo actualizar el email
+            actualizarCuenta = "UPDATE cuenta SET email = ? WHERE id = ?;";
+            parametrosCuenta = [email, resultadoUsuario[0].cuenta_id];
+        }
+
+        sql.ejecutarResSQL(actualizarCuenta, parametrosCuenta, (resultadoCuenta) => {
+            // Actualizar la persona asociada al usuario
+            const actualizarPersona = "UPDATE persona SET nombres = ?, apellidos = ? WHERE id = ?;";
+            sql.ejecutarResSQL(actualizarPersona, [nombres, apellidos, resultadoUsuario[0].persona_id], (resultadoPersona) => {
+                return res.status(200).send({ en: 1, m: "Usuario actualizado exitosamente" });
+            });
+        });
+    });
+});
+
+
+
+
 module.exports = router;

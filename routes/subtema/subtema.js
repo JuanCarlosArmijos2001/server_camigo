@@ -9,8 +9,10 @@ router.post("/registrarSubtema", [], (req, res) => {
     let recursos = req.body.recursos;
     let estado = 1;
     let idTema = req.body.idTema;
+
     const registrarSubtema =
         "INSERT INTO subtema (titulo, objetivos, descripcion, ejemploCodigo, recursos, estado, idTema) VALUES (?, ?, ?, ?, ?, ?, ?);";
+
     sql.ejecutarResSQL(
         registrarSubtema,
         [titulo, objetivos, descripcion, ejemploCodigo, recursos, estado, idTema],
@@ -18,10 +20,10 @@ router.post("/registrarSubtema", [], (req, res) => {
             if (resultado["affectedRows"] > 0)
                 return res.status(200).send({
                     en: 1,
-                    m: "Se registro el subtema con éxito",
+                    m: "Se registró el subtema con éxito",
                     idSubtema: resultado["insertId"],
                 });
-            return res.status(200).send({ en: -1, m: "No se pudo registrar subtema" });
+            return res.status(200).send({ en: -1, m: "No se pudo registrar el subtema" });
         }
     );
 });
@@ -66,19 +68,6 @@ router.post("/activarDesactivarSubtema", [], (req, res) => {
     });
 });
 
-// router.post("/listarSubtemas", (req, res) => {
-//     let idTema = req.body.idTema;
-//     const obtenerTitulo = "SELECT * FROM subtema WHERE idTema = ?;";
-//     sql.ejecutarResSQL(obtenerTitulo, [idTema], (resultado) => {
-//         if (resultado.length > 0) {
-//             return res
-//                 .status(200)
-//                 .send({ en: 1, m: "Subtemas obtenidos", subtemas: resultado });
-//         } else {
-//             return res.status(200).send({ en: -1, m: "No se encontraron subtemas" });
-//         }
-//     });
-// });
 
 router.post("/listarSubtemas", (req, res) => {
     let idTema = req.body.idTema;

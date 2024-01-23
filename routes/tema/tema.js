@@ -7,23 +7,27 @@ router.post("/registrarTema", [], (req, res) => {
   let descripcion = req.body.descripcion;
   let recursos = req.body.recursos;
   let estado = 1;
+
   const registrarTema =
     "INSERT INTO tema (titulo, objetivos, descripcion, recursos, estado) VALUES (?, ?, ?, ?, ?);";
+
   sql.ejecutarResSQL(
     registrarTema,
     [titulo, objetivos, descripcion, recursos, estado],
     (resultado) => {
-      //return res.status(200).send({result:resultado, titulo:titulo, descripcion:descripcion})
-      if (resultado["affectedRows"] > 0)
+      if (resultado["affectedRows"] > 0) {
+        const idTemaInsertado = resultado["insertId"];
         return res.status(200).send({
           en: 1,
-          m: "Se registro el tema con éxito",
-          idTema: resultado["insertId"],
+          m: "Se registró el tema con éxito",
+          idTema: idTemaInsertado,
         });
-      return res.status(200).send({ en: -1, m: "No se pudo registrar tema" });
+      }
+      return res.status(200).send({ en: -1, m: "No se pudo registrar el tema" });
     }
   );
 });
+
 
 router.post("/editarTema", [], (req, res) => {
   let id = req.body.id;
@@ -63,19 +67,6 @@ router.post("/activarDesactivarTema", [], (req, res) => {
       .send({ en: -1, m: "No se pudo cambiar el estado del tema" });
   });
 });
-
-// router.get("/listarTemas", (req, res) => {
-//     sql.ejecutarResSQL("SELECT * FROM tema;", [], (resultado) => {
-//       if (resultado.length > 0) {
-//         return res
-//           .status(200)
-//           .send({ en: 1, m: "Temas obtenidos", temas: resultado });
-//       } else {
-//         return res.status(200).send({ en: -1, m: "No se encontraron temas" });
-//       }
-//     });
-//   });
-
 
 router.post("/listarTemas", (req, res) => {
   let obtenerTitulo;
