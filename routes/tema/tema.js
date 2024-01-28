@@ -7,13 +7,16 @@ router.post("/registrarTema", [], (req, res) => {
   let descripcion = req.body.descripcion;
   let recursos = req.body.recursos;
   let estado = 1;
+  let estado_completado = -1; // Asegúrate de inicializar correctamente esta variable
+  let progreso = 0; // Asegúrate de inicializar correctamente esta variable
+  let idUsuario = req.body.idUsuario;
 
   const registrarTema =
-    "INSERT INTO tema (titulo, objetivos, descripcion, recursos, estado) VALUES (?, ?, ?, ?, ?);";
+    "INSERT INTO tema (titulo, objetivos, descripcion, recursos, estado, estado_completado, progreso, idUsuario) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 
   sql.ejecutarResSQL(
     registrarTema,
-    [titulo, objetivos, descripcion, recursos, estado],
+    [titulo, objetivos, descripcion, recursos, estado, estado_completado, progreso, idUsuario],
     (resultado) => {
       if (resultado["affectedRows"] > 0) {
         const idTemaInsertado = resultado["insertId"];
@@ -27,6 +30,7 @@ router.post("/registrarTema", [], (req, res) => {
     }
   );
 });
+
 
 
 router.post("/editarTema", [], (req, res) => {
@@ -88,3 +92,13 @@ router.post("/listarTemas", (req, res) => {
 
 
 module.exports = router;
+
+//-- Sacar el total de temas
+// SELECT COUNT(*) FROM test.subtema WHERE idTema = 1;
+// -- Sacar temas completados
+// SELECT COUNT(*) FROM test.subtema WHERE (idTema = 1 AND estado_completado = 1);
+// -- Porcentaje progreso
+// SELECT 
+// ((SELECT COUNT(*) FROM test.subtema WHERE (idTema = 1 AND estado_completado = 1)) 
+// /
+// (SELECT COUNT(*) FROM test.subtema WHERE idTema = 1)) * 100 AS progreso;

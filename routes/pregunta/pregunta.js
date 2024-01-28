@@ -1,5 +1,9 @@
 const router = require("express").Router();
 const sql = require("../../config/config");
+const { calcularYActualizarProgresoEjercicio } = require("../utilities/DeterminarProgreso");
+const { calcularYActualizarProgresoSubtema } = require("../utilities/DeterminarProgreso");
+const { calcularYActualizarProgresoTema } = require("../utilities/DeterminarProgreso");
+const { calcularYActualizarProgresoGeneral } = require("../utilities/DeterminarProgreso");
 
 router.post("/registrarPregunta", [], (req, res) => {
     let enunciado = req.body.enunciado;
@@ -91,6 +95,52 @@ router.post("/listarPreguntas", (req, res) => {
     });
 });
 
+router.post("/completarPregunta", (req, res) => {
+    let idPregunta = req.body.idPregunta;
+    let idEjercicio = req.body.idEjercicio;
+    let idSubtema = req.body.idSubtema;
+    let idTema = req.body.idTema;
+    let idUsuario = req.body.idUsuario;
+    
+    // Cambiar estado_completado de la pregunta a 1
+    const completarPregunta = "UPDATE pregunta SET estado_completado = 1 WHERE id = ?;";
+    sql.ejecutarResSQL(completarPregunta, [idPregunta], (resultado) => {
+        if (resultado["affectedRows"] > 0) {
+            calcularYActualizarProgresoEjercicio(idEjercicio)
+                .then((mensaje) => {
+                    console.log(mensaje);
+                    calcularYActualizarProgresoSubtema(idSubtema)
+                        .then((mensaje) => {
+                            console.log(mensaje);
+                            calcularYActualizarProgresoTema(idTema)
+                                .then((mensaje) => {
+                                    console.log(mensaje);
+                                    calcularYActualizarProgresoGeneral(idUsuario)
+                                        .then((mensaje) => {
+                                            console.log(mensaje);
+                                            return res.status(200).send({ en: 1, m: mensaje });
+                                        })
+                                        .catch((error) => {
+                                            return res.status(200).send({ en: -1, m: error });
+                                        });
+                                })
+                                .catch((error) => {
+                                    return res.status(200).send({ en: -1, m: error });
+                                });
+                        })
+                        .catch((error) => {
+                            return res.status(200).send({ en: -1, m: error });
+                        });
+                })
+                .catch((error) => {
+                    return res.status(200).send({ en: -1, m: error });
+                });
+
+        } else {
+            return res.status(200).send({ en: -1, m: "No se pudo completar la pregunta" });
+        }
+    });
+});
 
 
 module.exports = router;

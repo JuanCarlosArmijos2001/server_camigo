@@ -43,16 +43,17 @@ router.post('/autenticacion', (req, res) => {
 
 router.post("/detalleSesion", (req, res) => {
     const { userId } = req.body;
+
     if (!userId) {
         return res.status(400).send({ en: -1, m: "Se requiere el ID del usuario en el cuerpo de la solicitud." });
     }
 
     // Primero, obtenemos el persona_id, cuenta_id y rol_id asociados al usuario
-    const obtenerIdsUsuario = "SELECT persona_id, cuenta_id, rol_id FROM usuario WHERE id = ?;";
+    const obtenerIdsUsuario = "SELECT id, persona_id, cuenta_id, rol_id FROM usuario WHERE id = ?;";
 
     sql.ejecutarResSQL(obtenerIdsUsuario, [userId], (resultado) => {
         if (resultado.length > 0) {
-            const { persona_id, cuenta_id, rol_id } = resultado[0];
+            const { id, persona_id, cuenta_id, rol_id } = resultado[0];
 
             // Segundo, obtenemos los detalles de la persona
             const obtenerDetallesPersona = "SELECT * FROM persona WHERE id = ?;";
@@ -66,6 +67,7 @@ router.post("/detalleSesion", (req, res) => {
                         return res.status(200).send({
                             en: 1,
                             m: "Detalles de la persona, cuenta y rol obtenidos",
+                            userId: id,  // Agregamos el ID del usuario a la respuesta
                             detallesPersona: detallesPersona[0],
                             detallesCuenta: detallesCuenta[0],
                             detallesRol: detallesRol[0],
@@ -78,6 +80,7 @@ router.post("/detalleSesion", (req, res) => {
         }
     });
 });
+
 
 router.post('/registro', (req, res) => {
     const { nombres, apellidos, email, clave, tipoRol } = req.body;
@@ -158,6 +161,47 @@ router.put('/editarUsuario', (req, res) => {
         });
     });
 });
+
+router.get('/listarDocentes', (req, res) => {
+    const listarDocentes = `
+        SELECT persona.nombres, persona.apellidos, cuenta.email
+        FROM usuario
+        INNER JOIN persona ON usuario.persona_id = persona.id
+        INNER JOIN cuenta ON usuario.cuenta_id = cuenta.id
+        INNER JOIN rol ON usuario.rol_id = rol.id
+        WHERE rol.tipo = 'docente';
+    `;
+
+    sql.ejecutarResSQL(listarDocentes, [], (resultados) => {
+        if (resultados.length > 0) {
+            res.status(200).json(resultados);
+        } else {
+            console.error("No se encontraron docentes.");
+            res.status(200).json({ en: -1, m: "No se encontraron docentes" });
+        }
+    });
+});
+
+router.get('/listarAdministradores', (req, res) => {
+    const listarAdministradores = `
+        SELECT persona.nombres, persona.apellidos, cuenta.email
+        FROM usuario
+        INNER JOIN persona ON usuario.persona_id = persona.id
+        INNER JOIN cuenta ON usuario.cuenta_id = cuenta.id
+        INNER JOIN rol ON usuario.rol_id = rol.id
+        WHERE rol.tipo = 'administrador';
+    `;
+
+    sql.ejecutarResSQL(listarAdministradores, [], (resultados) => {
+        if (resultados.length > 0) {
+            res.status(200).json(resultados);
+        } else {
+            console.error("No se encontraron administradores.");
+            res.status(200).json({ en: -1, m: "No se encontraron administradores" });
+        }
+    });
+});
+
 
 
 

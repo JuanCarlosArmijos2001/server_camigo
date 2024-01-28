@@ -5,6 +5,7 @@ var mysqlConnection = mysql.createConnection({
   user: "root",
   password: "password",
   database: "camigo",
+  // database: "test",
 });
 
 mysqlConnection.connect((err) => {

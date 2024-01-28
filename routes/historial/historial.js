@@ -8,14 +8,14 @@ router.post("/registrarCambio", (req, res) => {
     let idEjercicio = req.body.idEjercicio;
     let idPregunta = req.body.idPregunta;
     let detalles = req.body.detalles;
-    let personaId = req.body.personaId;
+    let idUsuario = req.body.idUsuario;
 
     const registrarCambio =
-        "INSERT INTO historial (tipo_entidad, id_tema, id_subtema, id_ejercicio, id_pregunta, detalles, persona_id) VALUES (?, ?, ?, ?, ?, ?, ?);";
+        "INSERT INTO historial (tipo_entidad, id_tema, id_subtema, id_ejercicio, id_pregunta, detalles, id_usuario) VALUES (?, ?, ?, ?, ?, ?, ?);";
 
     sql.ejecutarResSQL(
         registrarCambio,
-        [tipoEntidad, idTema, idSubtema, idEjercicio, idPregunta, detalles, personaId],
+        [tipoEntidad, idTema, idSubtema, idEjercicio, idPregunta, detalles, idUsuario],
         (resultado) => {
             if (resultado["affectedRows"] > 0) {
                 return res.status(200).send({
