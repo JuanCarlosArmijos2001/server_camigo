@@ -1,14 +1,16 @@
 const router = require("express").Router();
 const sql = require("../../config/config");
+const BD = process.env.BD;
 
+//--------------------REGISTRAR SUBTEMA--------------------
 router.post("/registrarSubtema", [], (req, res) => {
+    let idTema = req.body.idTema;
     let titulo = req.body.titulo;
     let objetivos = req.body.objetivos;
     let descripcion = req.body.descripcion;
     let ejemploCodigo = req.body.ejemploCodigo;
     let recursos = req.body.recursos;
     let estado = 1;
-    let idTema = req.body.idTema;
 
     const registrarSubtema =
         "INSERT INTO subtema (titulo, objetivos, descripcion, ejemploCodigo, recursos, estado, idTema) VALUES (?, ?, ?, ?, ?, ?, ?);";
@@ -17,16 +19,36 @@ router.post("/registrarSubtema", [], (req, res) => {
         registrarSubtema,
         [titulo, objetivos, descripcion, ejemploCodigo, recursos, estado, idTema],
         (resultado) => {
-            if (resultado["affectedRows"] > 0)
-                return res.status(200).send({
-                    en: 1,
-                    m: "Se registró el subtema con éxito",
-                    idSubtema: resultado["insertId"],
-                });
-            return res.status(200).send({ en: -1, m: "No se pudo registrar el subtema" });
+            if (resultado["affectedRows"] > 0) {
+                const idSubtemaInsertado = resultado["insertId"];
+
+                // Segunda consulta para insertar en usuario_subtema
+                const insertarEnUsuarioSubtema =
+                    "INSERT INTO tema_subtema (idUsuario, idSubtema) SELECT id, ? FROM usuario;";
+
+                sql.ejecutarResSQL(
+                    insertarEnUsuarioSubtema,
+                    [idSubtemaInsertado],
+                    (resultadoUsuarioSubtema) => {
+                        if (resultadoUsuarioSubtema["affectedRows"] > 0) {
+                            return res.status(200).send({
+                                en: 1,
+                                m: "Se registró el subtema con éxito",
+                                idSubtema: idSubtemaInsertado,
+                            });
+                        } else {
+                            return res.status(200).send({ en: -1, m: "No se pudo registrar en usuario_subtema" });
+                        }
+                    }
+                );
+            } else {
+                return res.status(200).send({ en: -1, m: "No se pudo registrar el subtema" });
+            }
         }
     );
 });
+
+
 
 router.post("/editarSubtema", [], (req, res) => {
     let id = req.body.id;
@@ -35,17 +57,19 @@ router.post("/editarSubtema", [], (req, res) => {
     let descripcion = req.body.descripcion;
     let ejemploCodigo = req.body.ejemploCodigo;
     let recursos = req.body.recursos;
+    let estado = req.body.estado;
+    let subtemaEditadoBackend = { id, titulo, objetivos, descripcion, ejemploCodigo, recursos, estado };
     const editarSubtema =
-        "UPDATE subtema SET titulo = ?, objetivos = ?, descripcion = ?, ejemploCodigo = ?, recursos = ? WHERE id = ?;";
+        "UPDATE subtema SET titulo = ?, objetivos = ?, descripcion = ?, ejemploCodigo = ?, recursos = ?, estado = ? WHERE id = ?;";
     sql.ejecutarResSQL(
         editarSubtema,
-        [titulo, objetivos, descripcion, ejemploCodigo, recursos, id],
+        [titulo, objetivos, descripcion, ejemploCodigo, recursos, estado, id],
         (resultado) => {
             //return res.status(200).send({result:resultado, titulo:titulo, descripcion:descripcion, id:id})
             if (resultado["affectedRows"] > 0)
                 return res
                     .status(200)
-                    .send({ en: 1, m: "Se editó el subtema con éxito", idSubtema: id });
+                    .send({ en: 1, m: "Se editó el subtema con éxito", idSubtema: id, subtemaEditadoBackend });
             return res.status(200).send({ en: -1, m: "No se pudo editar el subtema" });
         }
     );
@@ -71,13 +95,22 @@ router.post("/activarDesactivarSubtema", [], (req, res) => {
 
 router.post("/listarSubtemas", (req, res) => {
     let idTema = req.body.idTema;
+    let idUsuario = req.body.idUsuario;
     let obtenerSubtemas;
     if (req.body.mensaje === "subtemasActivos") {
-        obtenerSubtemas = "SELECT * FROM subtema WHERE idTema = ? AND estado = 1;";
+        obtenerSubtemas =
+            `SELECT tema_subtema.idSubtema, tema_subtema.progreso, subtema.titulo, subtema.objetivos, subtema.descripcion, subtema.ejemploCodigo, subtema.recursos, subtema.estado ` +
+            `FROM ${BD}.tema_subtema ` +
+            `INNER JOIN ${BD}.subtema ON tema_subtema.idSubtema = subtema.id ` +
+            `WHERE subtema.idTema = ? AND idUsuario = ? AND estado = 1;`;
     } else {
-        obtenerSubtemas = "SELECT * FROM subtema WHERE idTema = ?;";
+        obtenerSubtemas =
+            `SELECT tema_subtema.idSubtema, tema_subtema.progreso, subtema.titulo, subtema.objetivos, subtema.descripcion, subtema.ejemploCodigo, subtema.recursos, subtema.estado ` +
+            `FROM ${BD}.tema_subtema ` +
+            `INNER JOIN ${BD}.subtema ON tema_subtema.idSubtema = subtema.id ` +
+            `WHERE subtema.idTema = ? AND idUsuario = ?;`;
     }
-    sql.ejecutarResSQL(obtenerSubtemas, [idTema], (resultado) => {
+    sql.ejecutarResSQL(obtenerSubtemas, [idTema, idUsuario], (resultado) => {
         if (resultado.length > 0) {
             return res
                 .status(200)

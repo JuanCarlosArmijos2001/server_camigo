@@ -1,11 +1,12 @@
 var mysql = require("mysql2");
+const BD = process.env.BD;
 
 var mysqlConnection = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "password",
-  database: "camigo",
-  // database: "test",
+  // database: "camigo",
+  database: BD,
 });
 
 mysqlConnection.connect((err) => {

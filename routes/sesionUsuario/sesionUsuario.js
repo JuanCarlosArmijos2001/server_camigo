@@ -41,6 +41,8 @@ router.post('/autenticacion', (req, res) => {
     });
 });
 
+
+
 router.post("/detalleSesion", (req, res) => {
     const { userId } = req.body;
 
@@ -48,12 +50,12 @@ router.post("/detalleSesion", (req, res) => {
         return res.status(400).send({ en: -1, m: "Se requiere el ID del usuario en el cuerpo de la solicitud." });
     }
 
-    // Primero, obtenemos el persona_id, cuenta_id y rol_id asociados al usuario
-    const obtenerIdsUsuario = "SELECT id, persona_id, cuenta_id, rol_id FROM usuario WHERE id = ?;";
+    // Primero, obtenemos el persona_id, cuenta_id, rol_id y progreso asociados al usuario
+    const obtenerIdsUsuario = "SELECT id, persona_id, cuenta_id, rol_id, progreso FROM usuario WHERE id = ?;";
 
     sql.ejecutarResSQL(obtenerIdsUsuario, [userId], (resultado) => {
         if (resultado.length > 0) {
-            const { id, persona_id, cuenta_id, rol_id } = resultado[0];
+            const { id, persona_id, cuenta_id, rol_id, progreso } = resultado[0];
 
             // Segundo, obtenemos los detalles de la persona
             const obtenerDetallesPersona = "SELECT * FROM persona WHERE id = ?;";
@@ -67,7 +69,8 @@ router.post("/detalleSesion", (req, res) => {
                         return res.status(200).send({
                             en: 1,
                             m: "Detalles de la persona, cuenta y rol obtenidos",
-                            userId: id,  // Agregamos el ID del usuario a la respuesta
+                            userId: id,
+                            progreso: progreso,  // Agregamos el progreso del usuario a la respuesta
                             detallesPersona: detallesPersona[0],
                             detallesCuenta: detallesCuenta[0],
                             detallesRol: detallesRol[0],
@@ -80,6 +83,7 @@ router.post("/detalleSesion", (req, res) => {
         }
     });
 });
+
 
 
 router.post('/registro', (req, res) => {
@@ -109,11 +113,68 @@ router.post('/registro', (req, res) => {
                     sql.ejecutarResSQL(obtenerIdRol, [tipoRol], (resultadoIdRol) => {
                         if (resultadoIdRol.length > 0) {
                             const idRol = resultadoIdRol[0].id;
-
                             // Crear un nuevo usuario
                             const crearUsuario = "INSERT INTO usuario (persona_id, cuenta_id, rol_id) VALUES (?, ?, ?);";
                             sql.ejecutarResSQL(crearUsuario, [idPersona, idCuenta, idRol], (resultadoUsuario) => {
-                                return res.status(200).send({ en: 1, m: "Registro exitoso" });
+                                // return res.status(200).send({ en: 1, m: "Registro exitoso" });
+                                if (resultadoUsuario["affectedRows"] > 0) {
+                                    const idUsuarioInsertado = resultadoUsuario["insertId"];
+                                    // Segunda consulta para insertar en usuario_tema
+
+                                    const insertarTemasNuevoUsuario =
+                                        "INSERT INTO usuario_tema (idUsuario, idTema) SELECT ?, id FROM tema;";
+                                    sql.ejecutarResSQL(
+                                        insertarTemasNuevoUsuario,
+                                        [idUsuarioInsertado],
+                                        (resultadoTemasUsuario) => {
+                                            if (resultadoTemasUsuario["affectedRows"] > 0) {
+                                                const insertarSubtemasNuevoUsuario =
+                                                    "INSERT INTO tema_subtema (idUsuario, idSubtema) SELECT ?, id FROM subtema;";
+                                                sql.ejecutarResSQL(
+                                                    insertarSubtemasNuevoUsuario,
+                                                    [idUsuarioInsertado],
+                                                    (resultadoSubtemasUsuario) => {
+                                                        if (resultadoSubtemasUsuario["affectedRows"] > 0) {
+                                                            const insertarEjerciciosNuevoUsuario =
+                                                                "INSERT INTO subtema_ejercicio (idUsuario, idEjercicio) SELECT ?, id FROM ejercicio;";
+                                                            sql.ejecutarResSQL(
+                                                                insertarEjerciciosNuevoUsuario,
+                                                                [idUsuarioInsertado],
+                                                                (resultadoEjercicioUsuario) => {
+                                                                    if (resultadoEjercicioUsuario["affectedRows"] > 0) {
+                                                                        const insertarPreguntasNuevoUsuario =
+                                                                            "INSERT INTO ejercicio_pregunta (idUsuario, idPregunta) SELECT ?, id FROM pregunta;";
+                                                                        sql.ejecutarResSQL(
+                                                                            insertarPreguntasNuevoUsuario,
+                                                                            [idUsuarioInsertado],
+                                                                            (resultadoPreguntaUsuario) => {
+                                                                                if (resultadoPreguntaUsuario["affectedRows"] > 0) {
+                                                                                    return res.status(200).send({
+                                                                                        en: 1,
+                                                                                        m: "Se registró correctamente el usuario y se le asigno todo el contenido existente",
+                                                                                        idTema: idUsuarioInsertado,
+                                                                                    });
+                                                                                } else {
+                                                                                    return res.status(200).send({ en: -1, m: "No se pudo registrar en ejercicio_pregunta" });
+                                                                                }
+                                                                            }
+                                                                        );
+                                                                    } else {
+                                                                        return res.status(200).send({ en: -1, m: "No se pudo registrar en subtema_ejercicio" });
+                                                                    }
+                                                                }
+                                                            );
+                                                        } else {
+                                                            return res.status(200).send({ en: -1, m: "No se pudo registrar en tema_subtema" });
+                                                        }
+                                                    }
+                                                );
+                                            } else {
+                                                return res.status(200).send({ en: -1, m: "No se pudo registrar en usuario_tema" });
+                                            }
+                                        }
+                                    );
+                                }
                             });
                         } else {
                             return res.status(200).send({ en: -1, m: "Tipo de rol no válido" });
@@ -126,8 +187,10 @@ router.post('/registro', (req, res) => {
 });
 
 
-router.put('/editarUsuario', (req, res) => {
+
+router.post('/editarUsuario', (req, res) => {
     const { userId, nombres, apellidos, email, clave } = req.body;
+    const usuarioEditado = { userId, nombres, apellidos, email, clave }
 
     // Verificar si el usuario existe
     const verificarUsuario = "SELECT * FROM usuario WHERE id = ?;";
@@ -156,11 +219,12 @@ router.put('/editarUsuario', (req, res) => {
             // Actualizar la persona asociada al usuario
             const actualizarPersona = "UPDATE persona SET nombres = ?, apellidos = ? WHERE id = ?;";
             sql.ejecutarResSQL(actualizarPersona, [nombres, apellidos, resultadoUsuario[0].persona_id], (resultadoPersona) => {
-                return res.status(200).send({ en: 1, m: "Usuario actualizado exitosamente" });
+                return res.status(200).send({ en: 1, m: "Usuario actualizado exitosamente", usuarioEditado });
             });
         });
     });
 });
+
 
 router.get('/listarDocentes', (req, res) => {
     const listarDocentes = `
@@ -203,7 +267,5 @@ router.get('/listarAdministradores', (req, res) => {
 });
 
 
-
-
-
 module.exports = router;
+

@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const sql = require("../../config/config");
+const BD = process.env.BD;
 
 router.post("/registrarTema", [], (req, res) => {
   let titulo = req.body.titulo;
@@ -7,30 +8,42 @@ router.post("/registrarTema", [], (req, res) => {
   let descripcion = req.body.descripcion;
   let recursos = req.body.recursos;
   let estado = 1;
-  let estado_completado = -1; // Asegúrate de inicializar correctamente esta variable
-  let progreso = 0; // Asegúrate de inicializar correctamente esta variable
-  let idUsuario = req.body.idUsuario;
 
   const registrarTema =
-    "INSERT INTO tema (titulo, objetivos, descripcion, recursos, estado, estado_completado, progreso, idUsuario) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+    "INSERT INTO tema (titulo, objetivos, descripcion, recursos, estado) VALUES (?, ?, ?, ?, ?);";
 
   sql.ejecutarResSQL(
     registrarTema,
-    [titulo, objetivos, descripcion, recursos, estado, estado_completado, progreso, idUsuario],
+    [titulo, objetivos, descripcion, recursos, estado],
     (resultado) => {
       if (resultado["affectedRows"] > 0) {
         const idTemaInsertado = resultado["insertId"];
-        return res.status(200).send({
-          en: 1,
-          m: "Se registró el tema con éxito",
-          idTema: idTemaInsertado,
-        });
+
+        // Segunda consulta para insertar en usuario_tema
+        const insertarEnUsuarioTema =
+          "INSERT INTO usuario_tema (idUsuario, idTema) SELECT id, ? FROM usuario;";
+
+        sql.ejecutarResSQL(
+          insertarEnUsuarioTema,
+          [idTemaInsertado],
+          (resultadoUsuarioTema) => {
+            if (resultadoUsuarioTema["affectedRows"] > 0) {
+              return res.status(200).send({
+                en: 1,
+                m: "Se registró el tema con éxito",
+                idTema: idTemaInsertado,
+              });
+            } else {
+              return res.status(200).send({ en: -1, m: "No se pudo registrar en usuario_tema" });
+            }
+          }
+        );
+      } else {
+        return res.status(200).send({ en: -1, m: "No se pudo registrar el tema" });
       }
-      return res.status(200).send({ en: -1, m: "No se pudo registrar el tema" });
     }
   );
 });
-
 
 
 router.post("/editarTema", [], (req, res) => {
@@ -39,17 +52,20 @@ router.post("/editarTema", [], (req, res) => {
   let objetivos = req.body.objetivos;
   let descripcion = req.body.descripcion;
   let recursos = req.body.recursos;
+  let estado = req.body.estado;
+  let temaEditadoBackend = {id, titulo, objetivos, descripcion, recursos, estado};
+
   const editarTema =
-    "UPDATE tema SET titulo = ?, objetivos = ?, descripcion = ?, recursos = ? WHERE id = ?;";
+    "UPDATE tema SET titulo = ?, objetivos = ?, descripcion = ?, recursos = ?, estado = ? WHERE id = ?;";
   sql.ejecutarResSQL(
     editarTema,
-    [titulo, objetivos, descripcion, recursos, id],
+    [titulo, objetivos, descripcion, recursos, estado, id],
     (resultado) => {
       //return res.status(200).send({result:resultado, titulo:titulo, descripcion:descripcion, id:id})
       if (resultado["affectedRows"] > 0)
         return res
           .status(200)
-          .send({ en: 1, m: "Se editó el tema con éxito", idTema: id });
+          .send({ en: 1, m: "Se editó el tema con éxito", idTema: id, temaEditadoBackend});
       return res.status(200).send({ en: -1, m: "No se pudo editar el tema" });
     }
   );
@@ -73,13 +89,22 @@ router.post("/activarDesactivarTema", [], (req, res) => {
 });
 
 router.post("/listarTemas", (req, res) => {
-  let obtenerTitulo;
+  let obtenerTemas;
+  let idUsuario = req.body.idUsuario;
   if (req.body.mensaje === "temasActivos") {
-    obtenerTitulo = "SELECT * FROM tema WHERE estado = 1;";
+    obtenerTemas =
+    `SELECT usuario_tema.idTema, usuario_tema.progreso, tema.titulo, tema.objetivos, tema.descripcion, tema.recursos, tema.estado ` +
+    `FROM ${BD}.usuario_tema ` +
+    `INNER JOIN ${BD}.tema ON usuario_tema.idTema = tema.id ` +
+    `WHERE usuario_tema.idUsuario = ? AND tema.estado = 1;`;
   } else {
-    obtenerTitulo = "SELECT * FROM tema;";
+    obtenerTemas =
+      `SELECT usuario_tema.idTema, usuario_tema.progreso, tema.titulo, tema.objetivos, tema.descripcion, tema.recursos, tema.estado ` +
+      `FROM ${BD}.usuario_tema ` +
+      `INNER JOIN ${BD}.tema ON usuario_tema.idTema = tema.id ` +
+      `WHERE usuario_tema.idUsuario = ?;`;
   }
-  sql.ejecutarResSQL(obtenerTitulo, [], (resultado) => {
+  sql.ejecutarResSQL(obtenerTemas, [idUsuario], (resultado) => {
     if (resultado.length > 0) {
       return res
         .status(200)
@@ -92,13 +117,3 @@ router.post("/listarTemas", (req, res) => {
 
 
 module.exports = router;
-
-//-- Sacar el total de temas
-// SELECT COUNT(*) FROM test.subtema WHERE idTema = 1;
-// -- Sacar temas completados
-// SELECT COUNT(*) FROM test.subtema WHERE (idTema = 1 AND estado_completado = 1);
-// -- Porcentaje progreso
-// SELECT 
-// ((SELECT COUNT(*) FROM test.subtema WHERE (idTema = 1 AND estado_completado = 1)) 
-// /
-// (SELECT COUNT(*) FROM test.subtema WHERE idTema = 1)) * 100 AS progreso;
