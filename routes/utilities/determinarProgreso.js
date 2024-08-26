@@ -166,10 +166,13 @@ const calcularYActualizarProgresoTema = (idTema, idUsuario) => {
 const calcularYActualizarProgresoGeneral = (idUsuario) => {
     return new Promise((resolve, reject) => {
         const calcularProgresoQuery =
+
             `UPDATE usuario SET progreso = ` +
             `(SELECT (SUM(CASE WHEN usuario_tema.estado_completado = 1 THEN 1 ELSE 0 END) * 100 / COUNT(*)) ` +
-            `FROM usuario_tema WHERE (usuario_tema.idUsuario = ?) ) ` +
-            `WHERE id = ?;`;
+            `FROM usuario_tema ` +
+            `JOIN tema ON usuario_tema.idTema = tema.id ` +
+            `WHERE usuario_tema.idUsuario = ? AND tema.estado = 1) ` +
+            `WHERE id = ?;`
 
         sql.ejecutarResSQL(calcularProgresoQuery, [idUsuario, idUsuario], (progresoResultado) => {
             if (progresoResultado instanceof Error) {

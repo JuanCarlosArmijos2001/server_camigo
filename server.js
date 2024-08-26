@@ -14,10 +14,16 @@ app.use(bodyParser.json({ limit: "1mb" }));
 app.use(bodyParser.urlencoded({ limit: "1mb", extended: false, parameterLimit: 50 }));
 app.use(bodyParser.json());
 app.use(express.json());
-app.use(express.urlencoded({extended: false}));
+app.use(express.urlencoded({ extended: false }));
 
 // Configuraciones de CORS
 app.use(cors());
+
+app.use(cors({
+  origin: '*',
+  credentials: true
+}))
+
 
 //Ruta por defecto
 app.get('/', (req, res) => {
@@ -32,6 +38,7 @@ let preguntaRouter = require('./routes/pregunta/pregunta.js');
 let comentarioRouter = require('./routes/comentario/comentario.js');
 let sesionUsuario = require('./routes/sesionUsuario/sesionUsuario.js');
 let historial = require('./routes/historial/historial.js');
+let periodoAcademico = require('./routes/periodoAcademico/periodoAcademico.js');
 
 
 
@@ -43,9 +50,10 @@ app.use('/preguntas', preguntaRouter);
 app.use('/comentarios', comentarioRouter);
 app.use('/sesionUsuario', sesionUsuario);
 app.use('/historial', historial);
+app.use('/periodoAcademico', periodoAcademico);
 
 const server = app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 });
 
-module.exports={server,app};
+module.exports = { server, app };

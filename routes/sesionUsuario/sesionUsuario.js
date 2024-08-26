@@ -170,7 +170,7 @@ router.post('/registro', (req, res) => {
                                                     }
                                                 );
                                             } else {
-                                                return res.status(200).send({ en: -1, m: "No se pudo registrar en usuario_tema" });
+                                                return res.status(200).send({ en: -1, m: "_tema" });
                                             }
                                         }
                                     );
