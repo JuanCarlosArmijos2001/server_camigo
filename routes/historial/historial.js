@@ -30,6 +30,7 @@ router.post("/registrarCambio", (req, res) => {
     );
 });
 
+
 router.post("/listarCambios", (req, res) => {
     const idEntidad = req.body.idEntidad;
     const tipoEntidad = req.body.tipoEntidad;
@@ -59,7 +60,9 @@ router.post("/listarCambios", (req, res) => {
 
     sql.ejecutarResSQL(obtenerCambiosSQL, [idEntidad], (resultado) => {
         if (resultado.length > 0) {
-            return res.status(200).send({ en: 1, m: "Cambios obtenidos", cambios: resultado });
+            // Invertir el orden de los resultados
+            const cambiosInvertidos = resultado.reverse();
+            return res.status(200).send({ en: 1, m: "Cambios obtenidos", cambios: cambiosInvertidos });
         } else {
             return res.status(200).send({ en: -1, m: `No se encontraron cambios para esta ${tipoEntidad}` });
         }

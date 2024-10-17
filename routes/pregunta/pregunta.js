@@ -6,54 +6,6 @@ const { calcularYActualizarProgresoTema } = require("../utilities/determinarProg
 const { calcularYActualizarProgresoGeneral } = require("../utilities/determinarProgreso");
 const BD = process.env.BD;
 
-//--------------------REGISTRAR PREGUNTA--------------------
-// router.post("/registrarPregunta", [], (req, res) => {
-//     let enunciado = req.body.enunciado;
-//     let opcion_a = req.body.opcion_a;
-//     let opcion_b = req.body.opcion_b;
-//     let opcion_c = req.body.opcion_c;
-//     let opcion_d = req.body.opcion_d;
-//     let respuesta_correcta = req.body.respuesta_correcta;
-//     let justificacion = req.body.justificacion;
-//     let estado = 1;
-//     let idEjercicio = req.body.idEjercicio; // Asegúrate de que este campo esté disponible en el cuerpo de la solicitud
-
-//     const registrarPregunta =
-//         "INSERT INTO pregunta (enunciado, opcion_a, opcion_b, opcion_c, opcion_d, respuesta_correcta, justificacion, estado, idEjercicio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
-
-//     sql.ejecutarResSQL(
-//         registrarPregunta,
-//         [enunciado, opcion_a, opcion_b, opcion_c, opcion_d, respuesta_correcta, justificacion, estado, idEjercicio],
-//         (resultado) => {
-//             if (resultado["affectedRows"] > 0) {
-//                 const idPreguntaInsertada = resultado["insertId"];
-
-//                 // Segunda consulta para insertar en ejercicio_pregunta por cada usuario
-//                 const insertarEnEjercicioPregunta =
-//                     "INSERT INTO ejercicio_pregunta (idUsuario, idPregunta) SELECT id, ? FROM usuario;";
-
-//                 sql.ejecutarResSQL(
-//                     insertarEnEjercicioPregunta,
-//                     [idPreguntaInsertada],
-//                     (resultadoEjercicioPregunta) => {
-//                         if (resultadoEjercicioPregunta["affectedRows"] > 0) {
-//                             return res.status(200).send({
-//                                 en: 1,
-//                                 m: "Se registró la pregunta con éxito",
-//                                 idPregunta: idPreguntaInsertada,
-//                             });
-//                         } else {
-//                             return res.status(200).send({ en: -1, m: "No se pudo registrar en ejercicio_pregunta porque faltan preguntas o usuarios" });
-//                         }
-//                     }
-//                 );
-//             } else {
-//                 return res.status(200).send({ en: -1, m: "No se pudo registrar la pregunta" });
-//             }
-//         }
-//     );
-// });
-
 //registrar pregunta
 router.post("/registrarPregunta", [], (req, res) => {
     let enunciado = req.body.enunciado;
@@ -237,6 +189,8 @@ router.post("/completarPregunta", (req, res) => {
                                             console.log(mensaje);
                                             console.log(progresoUsuario);
                                             console.log("progreso ejercicio en funcion",progresoEjercicio);
+                                            console.log("respuesta:")
+                                            console.log(progresoTema);
                                             return res.status(200).send({ en: 1, m: mensaje, progresoEjercicio, progresoSubtema, progresoTema, progresoUsuario });
                                         })
                                         .catch((error) => {

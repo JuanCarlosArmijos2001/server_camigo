@@ -100,7 +100,10 @@ const calcularYActualizarProgresoSubtema = (idSubtema, idUsuario) => {
                             }
                         });
                     } else {
-                        resolve("El progreso aún no ha llegado al 100% - Subtema");
+                        const mensaje = "El progreso aún no ha llegado al 100% - Subtema";
+                        const progresoSubtema = progresoActual[0].progreso;
+                        console.log("progresoSubtema", progresoSubtema);
+                        resolve({ mensaje, progresoSubtema });
                     }
                 });
             } else {
@@ -152,7 +155,10 @@ const calcularYActualizarProgresoTema = (idTema, idUsuario) => {
                             }
                         });
                     } else {
-                        resolve("El progreso aún no ha llegado al 100% - Tema");
+                        const mensaje = "El progreso aún no ha llegado al 100% - Tema";
+                        const progresoTema = progresoActual[0].progreso;
+                        console.log("progresoTema", progresoTema);
+                        resolve({ mensaje, progresoTema });
                     }
                 });
             } else {

@@ -39,6 +39,8 @@ let comentarioRouter = require('./routes/comentario/comentario.js');
 let sesionUsuario = require('./routes/sesionUsuario/sesionUsuario.js');
 let historial = require('./routes/historial/historial.js');
 let periodoAcademico = require('./routes/periodoAcademico/periodoAcademico.js');
+let usuario = require('./routes/usuario/usuario.js');
+let valoracion = require('./routes/valoracion/valoracion.js');
 
 
 
@@ -51,6 +53,8 @@ app.use('/comentarios', comentarioRouter);
 app.use('/sesionUsuario', sesionUsuario);
 app.use('/historial', historial);
 app.use('/periodoAcademico', periodoAcademico);
+app.use('/usuario', usuario);
+app.use('/valoracion', valoracion);
 
 const server = app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
