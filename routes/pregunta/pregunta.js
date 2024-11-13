@@ -175,7 +175,7 @@ router.post("/completarPregunta", (req, res) => {
             calcularYActualizarProgresoEjercicio(idEjercicio, idUsuario)
                 .then(({mensaje, progresoEjercicio}) => {
                     console.log(mensaje);
-                    console.log("progreso en el clg",progresoEjercicio);
+                    console.log(progresoEjercicio);
                     calcularYActualizarProgresoSubtema(idSubtema, idUsuario)
                         .then(({mensaje, progresoSubtema}) => {
                             console.log(mensaje);
@@ -188,9 +188,6 @@ router.post("/completarPregunta", (req, res) => {
                                         .then(({mensaje, progresoUsuario}) => {
                                             console.log(mensaje);
                                             console.log(progresoUsuario);
-                                            console.log("progreso ejercicio en funcion",progresoEjercicio);
-                                            console.log("respuesta:")
-                                            console.log(progresoTema);
                                             return res.status(200).send({ en: 1, m: mensaje, progresoEjercicio, progresoSubtema, progresoTema, progresoUsuario });
                                         })
                                         .catch((error) => {

@@ -146,4 +146,50 @@ router.post("/listarTemas", (req, res) => {
   });
 });
 
+//Byscar tema
+router.post("/buscarTemas", (req, res) => {
+  const busqueda = req.body.busqueda;
+  const idUsuario = req.body.idUsuario;
+
+  // Query para buscar temas que coincidan con el término de búsqueda
+  const buscarTemas = `
+    SELECT 
+      usuario_tema.idTema,
+      usuario_tema.progreso,
+      tema.titulo,
+      tema.objetivos,
+      tema.descripcion,
+      tema.recursos,
+      tema.estado
+    FROM ${BD}.usuario_tema
+    INNER JOIN ${BD}.tema ON usuario_tema.idTema = tema.id
+    WHERE usuario_tema.idUsuario = ?
+    AND (
+      tema.titulo LIKE CONCAT('%', ?, '%')
+      OR tema.descripcion LIKE CONCAT('%', ?, '%')
+      OR tema.objetivos LIKE CONCAT('%', ?, '%')
+    )
+    ORDER BY tema.titulo ASC;
+  `;
+
+  sql.ejecutarResSQL(
+    buscarTemas,
+    [idUsuario, busqueda, busqueda, busqueda],
+    (resultado) => {
+      if (resultado.length > 0) {
+        return res.status(200).send({
+          en: 1,
+          m: "Contenido encontrado",
+          temas: resultado
+        });
+      } else {
+        return res.status(200).send({
+          en: -1,
+          m: "No se encontro contenido que coincida con la búsqueda"
+        });
+      }
+    }
+  );
+});
+
 module.exports = router;

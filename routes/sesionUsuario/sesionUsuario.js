@@ -3,10 +3,36 @@ const sql = require("../../config/config");
 const generarToken = require('../../middlewares/verificarToken').generarToken;
 const verificarToken = require('../../middlewares/verificarToken').verificarToken;
 const md5 = require('md5');
+// Verificar si existen registros en la tabla rol, si no, crear los roles por defecto
+const verificarRoles = "SELECT * FROM rol";
+
+sql.ejecutarResSQL(verificarRoles, [], (resultadoRoles) => {
+    if (resultadoRoles.length === 0) {
+        const rolesPorDefecto = [
+            { tipo: 'estudiante' },
+            { tipo: 'docente' },
+            { tipo: 'administrador' }
+        ];
+
+        rolesPorDefecto.forEach((rol) => {
+            const crearRol = "INSERT INTO rol (tipo) VALUES (?);";
+            sql.ejecutarResSQL(crearRol, [rol.tipo], (resultadoCrearRol) => {
+                if (resultadoCrearRol["affectedRows"] > 0) {
+                    console.log(`Rol ${rol.tipo} creado por defecto`);
+                } else {
+                    console.error(`No se pudo crear el rol ${rol.tipo} por defecto`);
+                }
+            });
+        });
+    } else {
+        console.log("Ya existen roles en la tabla");
+    }
+});
+
 
 // Verificar si existe un usuario administrador, si no, crear uno por defecto
 const verificarAdministrador = "SELECT * FROM usuario WHERE rol_id = (SELECT id FROM rol WHERE tipo = 'administrador')";
-
+verificarRoles;
 sql.ejecutarResSQL(verificarAdministrador, [], (resultadoAdministrador) => {
     if (resultadoAdministrador.length === 0) {
         // Crear usuario administrador por defecto
@@ -157,108 +183,6 @@ router.post("/detalleSesion", (req, res) => {
     });
 });
 
-
-
-// router.post('/registro', (req, res) => {
-//     const { nombres, apellidos, email, clave, tipoRol } = req.body;
-
-//     // Verificar si el email ya está registrado
-//     const verificarEmail = "SELECT * FROM cuenta WHERE email = ?;";
-//     sql.ejecutarResSQL(verificarEmail, [email], (resultado) => {
-//         if (resultado.length > 0) {
-//             return res.status(200).send({ en: -1, m: "El email ya está registrado" });
-//         } else {
-//             // Crear una nueva cuenta
-//             const claveEncriptada = md5(clave);
-//             const crearCuenta = "INSERT INTO cuenta (email, clave) VALUES (?, ?);";
-//             sql.ejecutarResSQL(crearCuenta, [email, claveEncriptada], (resultadoCuenta) => {
-//                 // Obtener el ID de la cuenta recién creada
-//                 const idCuenta = resultadoCuenta.insertId;
-
-//                 // Crear un nuevo registro en la tabla persona
-//                 const crearPersona = "INSERT INTO persona (nombres, apellidos) VALUES (?, ?);";
-//                 sql.ejecutarResSQL(crearPersona, [nombres, apellidos], (resultadoPersona) => {
-//                     // Obtener el ID de la persona recién creada
-//                     const idPersona = resultadoPersona.insertId;
-
-//                     // Obtener el ID del rol basado en el tipo de rol proporcionado
-//                     const obtenerIdRol = "SELECT id FROM rol WHERE tipo = ?;";
-//                     sql.ejecutarResSQL(obtenerIdRol, [tipoRol], (resultadoIdRol) => {
-//                         if (resultadoIdRol.length > 0) {
-//                             const idRol = resultadoIdRol[0].id;
-//                             // Crear un nuevo usuario
-//                             const crearUsuario = "INSERT INTO usuario (persona_id, cuenta_id, rol_id) VALUES (?, ?, ?);";
-//                             sql.ejecutarResSQL(crearUsuario, [idPersona, idCuenta, idRol], (resultadoUsuario) => {
-//                                 // return res.status(200).send({ en: 1, m: "Registro exitoso" });
-//                                 if (resultadoUsuario["affectedRows"] > 0) {
-//                                     const idUsuarioInsertado = resultadoUsuario["insertId"];
-//                                     // Segunda consulta para insertar en usuario_tema
-
-//                                     const insertarTemasNuevoUsuario =
-//                                         "INSERT INTO usuario_tema (idUsuario, idTema) SELECT ?, id FROM tema;";
-//                                     sql.ejecutarResSQL(
-//                                         insertarTemasNuevoUsuario,
-//                                         [idUsuarioInsertado],
-//                                         (resultadoTemasUsuario) => {
-//                                             if (resultadoTemasUsuario["affectedRows"] > 0) {
-//                                                 const insertarSubtemasNuevoUsuario =
-//                                                     "INSERT INTO tema_subtema (idUsuario, idSubtema) SELECT ?, id FROM subtema;";
-//                                                 sql.ejecutarResSQL(
-//                                                     insertarSubtemasNuevoUsuario,
-//                                                     [idUsuarioInsertado],
-//                                                     (resultadoSubtemasUsuario) => {
-//                                                         if (resultadoSubtemasUsuario["affectedRows"] > 0) {
-//                                                             const insertarEjerciciosNuevoUsuario =
-//                                                                 "INSERT INTO subtema_ejercicio (idUsuario, idEjercicio) SELECT ?, id FROM ejercicio;";
-//                                                             sql.ejecutarResSQL(
-//                                                                 insertarEjerciciosNuevoUsuario,
-//                                                                 [idUsuarioInsertado],
-//                                                                 (resultadoEjercicioUsuario) => {
-//                                                                     if (resultadoEjercicioUsuario["affectedRows"] > 0) {
-//                                                                         const insertarPreguntasNuevoUsuario =
-//                                                                             "INSERT INTO ejercicio_pregunta (idUsuario, idPregunta) SELECT ?, id FROM pregunta;";
-//                                                                         sql.ejecutarResSQL(
-//                                                                             insertarPreguntasNuevoUsuario,
-//                                                                             [idUsuarioInsertado],
-//                                                                             (resultadoPreguntaUsuario) => {
-//                                                                                 if (resultadoPreguntaUsuario["affectedRows"] > 0) {
-//                                                                                     return res.status(200).send({
-//                                                                                         en: 1,
-//                                                                                         m: "Se registró correctamente el usuario y se le asigno todo el contenido existente",
-//                                                                                         idTema: idUsuarioInsertado,
-//                                                                                     });
-//                                                                                 } else {
-//                                                                                     return res.status(200).send({ en: -1, m: "No se pudo registrar en ejercicio_pregunta" });
-//                                                                                 }
-//                                                                             }
-//                                                                         );
-//                                                                     } else {
-//                                                                         return res.status(200).send({ en: -1, m: "No se pudo registrar en subtema_ejercicio" });
-//                                                                     }
-//                                                                 }
-//                                                             );
-//                                                         } else {
-//                                                             return res.status(200).send({ en: -1, m: "No se pudo registrar en tema_subtema" });
-//                                                         }
-//                                                     }
-//                                                 );
-//                                             } else {
-//                                                 return res.status(200).send({ en: -1, m: "_tema" });
-//                                             }
-//                                         }
-//                                     );
-//                                 }
-//                             });
-//                         } else {
-//                             return res.status(200).send({ en: -1, m: "Tipo de rol no válido" });
-//                         }
-//                     });
-//                 });
-//             });
-//         }
-//     });
-// });
-
 router.post('/registro', (req, res) => {
     const { nombres, apellidos, email, clave, tipoRol } = req.body;
 
@@ -349,7 +273,6 @@ router.post('/registro', (req, res) => {
 });
 
 
-
 router.post('/editarUsuario', (req, res) => {
     const { userId, nombres, apellidos, email, clave } = req.body;
     const usuarioEditado = { userId, nombres, apellidos, email, clave }
@@ -428,6 +351,20 @@ router.get('/listarAdministradores', (req, res) => {
     });
 });
 
+router.get('/test', (req, res) => {
+    const listarRoles = `
+        SELECT * FROM rol;
+    `;
+
+    sql.ejecutarResSQL(listarRoles, [], (resultados) => {
+        if (resultados.length > 0) {
+            res.status(200).json(resultados);
+        } else {
+            console.error("No se encontraron roles.");
+            res.status(200).json({ en: -1, m: "No se encontraron roles" });
+        }
+    });
+});
 
 module.exports = router;
 

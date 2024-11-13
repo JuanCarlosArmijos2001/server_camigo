@@ -13,7 +13,7 @@ mysqlConnection.connect((err) => {
     throw new Error(err);
     console.log(err);
   } else {
-    console.log(`CONEXION EXITOSA A LA BASE DE DATOS`)
+    console.log(`CONEXION EXITOSA A LA BASE DE DATOS, BD: `, process.env.BD);
   }
 });
 
