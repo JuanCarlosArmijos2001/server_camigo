@@ -366,5 +366,49 @@ router.get('/test', (req, res) => {
     });
 });
 
+router.post('/validarUsuarioAerobase', (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).send({ en: -1, m: "El email es obligatorio" });
+    }
+
+    // Consulta para obtener el valor de userAerobase
+    const verificarUserAerobase = "SELECT userAerobase FROM cuenta WHERE email = ?;";
+
+    sql.ejecutarResSQL(verificarUserAerobase, [email], (resultado) => {
+        if (resultado.length > 0) {
+            const usuarioAerobase = resultado[0].userAerobase;
+
+            if (usuarioAerobase === -1) {
+                return res.status(200).send({
+                    en: 1,
+                    usuarioAerobase: usuarioAerobase,
+                    m: "Usuario externo"
+                });
+            } else if (usuarioAerobase === 1) {
+                return res.status(200).send({
+                    en: 1,
+                    usuarioAerobase: usuarioAerobase,
+                    m: "Usuario interno"
+                });
+            } else {
+                return res.status(200).send({
+                    en: -1,
+                    usuarioAerobase: usuarioAerobase,
+                    m: "Estado no reconocido para el usuario"
+                });
+            }
+        } else {
+            return res.status(404).send({
+                en: -1,
+                usuarioAerobase: null,
+                m: "Usuario no encontrado"
+            });
+        }
+    });
+});
+
+
 module.exports = router;
 
