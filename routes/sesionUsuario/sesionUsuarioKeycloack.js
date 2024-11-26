@@ -5,28 +5,33 @@ const sql = require("../../config/config");
 router.post('/registrarUsuarioAerobaseComoUsuarioExterno', (req, res) => {
     //registrar usuario en mi bd cuando ya existe en aerobase (usuario nuevo del todo)
     const { nombres, apellidos, email, tipoRol } = req.body;
+    console.log(req.body);
 
-    const crearCuenta = "INSERT INTO cuenta (email, clave) VALUES (?, aerobasePassword);";
+    const crearCuenta = "INSERT INTO cuenta (email, clave, usuarioAerobase) VALUES (?, 'aerobasePassword', 1);";
     sql.ejecutarResSQL(crearCuenta, [email], (resultadoCuenta) => {
         // Obtener el ID de la cuenta recién creada
         const idCuenta = resultadoCuenta.insertId;
+        console.log(idCuenta);
 
         // Crear un nuevo registro en la tabla persona
         const crearPersona = "INSERT INTO persona (nombres, apellidos) VALUES (?, ?);";
         sql.ejecutarResSQL(crearPersona, [nombres, apellidos], (resultadoPersona) => {
             // Obtener el ID de la persona recién creada
             const idPersona = resultadoPersona.insertId;
+            console.log("idPersona: ", idPersona);
 
             // Obtener el ID del rol basado en el tipo de rol proporcionado
             const obtenerIdRol = "SELECT id FROM rol WHERE tipo = ?;";
             sql.ejecutarResSQL(obtenerIdRol, [tipoRol], (resultadoIdRol) => {
                 if (resultadoIdRol.length > 0) {
                     const idRol = resultadoIdRol[0].id;
+                    console.log("idRol: ", idRol);
                     // Crear un nuevo usuario
                     const crearUsuario = "INSERT INTO usuario (persona_id, cuenta_id, rol_id) VALUES (?, ?, ?);";
                     sql.ejecutarResSQL(crearUsuario, [idPersona, idCuenta, idRol], (resultadoUsuario) => {
                         if (resultadoUsuario["affectedRows"] > 0) {
                             const idUsuarioInsertado = resultadoUsuario["insertId"];
+                            console.log("idUsuarioInsertado: ", idUsuarioInsertado);
                             // Segunda consulta para insertar en usuario_tema
 
                             const insertarTemasNuevoUsuario =
@@ -61,7 +66,7 @@ router.post('/registrarUsuarioAerobaseComoUsuarioExterno', (req, res) => {
                                                                 en: 1,
                                                                 m: "Se registró correctamente el usuario",
                                                                 tipoUsuario: "De Interno a Externo",
-                                                                idUsuario: idUsuarioInsertado,
+                                                                userId: idUsuarioInsertado,
                                                             });
                                                         }
                                                     );
@@ -115,6 +120,7 @@ router.post('/obtenerDetallesUsuarioAerobase', (req, res) => {
                             detallesPersona: detallesPersona[0],
                             detallesCuenta: detallesCuenta[0],
                             detallesRol: detallesRol[0],
+                            tipoUsuario: "De Interno a Externo",
                         });
                     });
                 });
@@ -128,7 +134,6 @@ router.post('/obtenerDetallesUsuarioAerobase', (req, res) => {
 
 router.post('/comprobarExistenciaDeUsuarioInternoComoUsuarioInterno', (req, res) => {
     const { email } = req.body;
-    const { usuarioAerobase } = req.usuarioAerobase;
 
     if (!email) {
         return res.status(400).send({ en: -1, m: "El email es obligatorio" });
@@ -138,29 +143,43 @@ router.post('/comprobarExistenciaDeUsuarioInternoComoUsuarioInterno', (req, res)
     const verificarExistenciaCuenta = "SELECT * FROM cuenta WHERE email = ?;";
 
     sql.ejecutarResSQL(verificarExistenciaCuenta, [email], (resultadoExistenciaCuenta) => {
+        console.log("CUENAT EXISTE")
         console.log(resultadoExistenciaCuenta);
         if (resultadoExistenciaCuenta.length > 0) {
+            const { id: idCuenta } = resultadoExistenciaCuenta[0];
+            // Existe cuenta de usuario
+            const obtenerIdsUsuario = "SELECT id FROM usuario WHERE cuenta_id = ?;";
+            sql.ejecutarResSQL(obtenerIdsUsuario, [idCuenta], (resultadoUserID) => {
+                if (resultadoUserID.length > 0) {
+                    const { id: idUsuario } = resultadoUserID[0];
 
-            // Consulta para saber si la cuenta existente del usuario es como usuario interno (Aerobase) o externo (Normal)
-            const verificarCuentaComoUsuarioExterno = "SELECT * FROM cuenta WHERE email = ? and usuarioAerobase = -1;";
+                    // Consulta para saber si la cuenta existente del usuario es como usuario interno (Aerobase) o externo (Normal)
+                    const verificarCuentaComoUsuarioExterno = "SELECT * FROM cuenta WHERE email = ? and usuarioAerobase = -1;";
 
-            sql.ejecutarResSQL(verificarCuentaComoUsuarioExterno, [email], (resultadoCuentaComoUsuarioExterno) => {
-                console.log(resultadoCuentaComoUsuarioExterno);
-                if (resultadoCuentaComoUsuarioExterno.length > 0) {
+                    sql.ejecutarResSQL(verificarCuentaComoUsuarioExterno, [email], (resultadoCuentaComoUsuarioExterno) => {
+                        console.log(resultadoCuentaComoUsuarioExterno);
 
-                    // Existe cuenta de usuario externo (Normal)
-                    return res.status(200).send({
-                        en: 1,
-                        tipoUsuario: "Externo",
-                        m: "El Usuario SÍ posee una cuenta en el sistema como usuario externo"
+                        if (resultadoCuentaComoUsuarioExterno.length > 0) {
+                            
+                            // Existe cuenta de usuario externo (Normal)
+                            return res.status(200).send({
+                                en: 1,
+                                tipoUsuario: "Externo",
+                                userId: idUsuario,
+                                m: "El Usuario SÍ posee una cuenta en el sistema como usuario externo"
+                            });
+                        } else {
+                            // Existe cuenta de usuario interno (Aerobase)
+                            return res.status(200).send({
+                                en: 1,
+                                tipoUsuario: "Interno",
+                                userId: idUsuario,
+                                m: "El Usuario Sí posee una cuenta en el sistema como usuario interno"
+                            });
+                        }
                     });
                 } else {
-                    // Existe cuenta de usuario interno (Aerobase)
-                    return res.status(200).send({
-                        en: 1,
-                        tipoUsuario: "Interno",
-                        m: "El Usuario Sí posee una cuenta en el sistema como usuario interno"
-                    });
+                    return res.status(200).send({ en: -1, m: "No se encontraron detalles para el usuario" });
                 }
             });
         } else {
@@ -172,3 +191,5 @@ router.post('/comprobarExistenciaDeUsuarioInternoComoUsuarioInterno', (req, res)
         }
     });
 });
+
+module.exports = router;

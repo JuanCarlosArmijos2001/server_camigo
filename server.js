@@ -41,6 +41,7 @@ let historial = require('./routes/historial/historial.js');
 let periodoAcademico = require('./routes/periodoAcademico/periodoAcademico.js');
 let usuario = require('./routes/usuario/usuario.js');
 let valoracion = require('./routes/valoracion/valoracion.js');
+let sesionUsuarioKeycloak = require('./routes/sesionUsuario/sesionUsuarioKeycloack.js');
 
 
 
@@ -55,6 +56,7 @@ app.use('/historial', historial);
 app.use('/periodoAcademico', periodoAcademico);
 app.use('/usuario', usuario);
 app.use('/valoracion', valoracion);
+app.use('/sesionUsuarioKeycloak', sesionUsuarioKeycloak);
 
 const server = app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
