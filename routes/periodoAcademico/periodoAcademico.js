@@ -1,74 +1,6 @@
 const router = require("express").Router();
 const sql = require("../../config/config");
 
-// router.post("/registrarPeriodoAcademico", [], async (req, res) => {
-//     let mesInicio = req.body.mesInicio;
-//     let mesFin = req.body.mesFin;
-//     let anio = req.body.anio;
-
-//     const registrarPeriodo = "INSERT INTO periodo_academico (mesInicio, mesFin, anio) VALUES (?, ?, ?);";
-
-//     sql.ejecutarResSQL(registrarPeriodo, [mesInicio, mesFin, anio], (resultado) => {
-//         if (resultado["affectedRows"] > 0) {
-//             copiaSeguridadPeriodoAnterior(res, resultado["insertId"]);
-//         } else {
-//             return res.status(500).send({ en: -1, m: "No se pudo registrar el periodo académico" });
-//         }
-//     });
-// });
-
-// //Obtener los periodos académicos registrados
-// router.post("/listarPeriodosAcademicosAnteriores", [], async (req, res) => {
-//     const queryPeriodosAcademicos = `
-//         SELECT id, mesInicio, mesFin, anio 
-//         FROM periodo_academico 
-//         WHERE id != (SELECT MAX(id) FROM periodo_academico)
-//         ORDER BY id DESC;
-//     `;
-
-//     sql.ejecutarResSQL(queryPeriodosAcademicos, [], (resultado) => {
-//         if (resultado && !resultado.error) {
-//             return res.status(200).send({
-//                 en: 1,
-//                 m: "Lista de períodos académicos anteriores",
-//                 periodos: resultado
-//             });
-//         } else {
-//             return res.status(500).send({
-//                 en: -1,
-//                 m: "Error al obtener la lista de períodos académicos anteriores",
-//                 error: resultado.error
-//             });
-//         }
-//     });
-// });
-
-
-// router.get("/periodoAcademicoActual", [], async (req, res) => {
-//     const query = `
-//         SELECT id, mesInicio, mesFin, anio 
-//         FROM periodo_academico 
-//         ORDER BY id DESC 
-//         LIMIT 1;
-//     `;
-
-//     sql.ejecutarResSQL(query, [], (resultado) => {
-//         if (resultado && resultado.length > 0 && !resultado.error) {
-//             return res.status(200).send({
-//                 en: 1,
-//                 m: "Periodo académico actual obtenido con éxito",
-//                 periodoActual: resultado[0]
-//             });
-//         } else {
-//             return res.status(500).send({
-//                 en: -1,
-//                 m: "Error al obtener el periodo académico actual",
-//                 error: resultado.error || "No se encontraron periodos académicos"
-//             });
-//         }
-//     });
-// });
-
 router.post("/registrarPeriodoAcademico", [], async (req, res) => {
     let mesInicio = req.body.mesInicio;
     let mesFin = req.body.mesFin;
@@ -227,69 +159,6 @@ router.post("/detallesProgresoCompleto", [], async (req, res) => {
     });
 });
 
-// router.post("/resumenProgresoUsuariosActual", [], async (req, res) => {
-//     const queryPeriodoActual = `
-//         SELECT id, mesInicio, mesFin, anio
-//         FROM periodo_academico
-//         ORDER BY id DESC
-//         LIMIT 1;
-//     `;
-
-//     sql.ejecutarResSQL(queryPeriodoActual, [], (resultadoPeriodo) => {
-//         if (resultadoPeriodo && resultadoPeriodo.length > 0 && !resultadoPeriodo.error) {
-//             const idPeriodoActual = resultadoPeriodo[0].id;
-
-//             const query = `
-//                 SELECT 
-//                     u.id AS idUsuario,
-//                     p.nombres AS usuario,
-//                     u.progreso AS progresoGeneral,
-//                     AVG(COALESCE(ts.progreso, 0)) AS promedioTemas,
-//                     AVG(COALESCE(se.progreso, 0)) AS promedioSubtemas,
-//                     AVG(COALESCE(se.progreso, 0)) AS promedioEjercicios
-//                 FROM usuario u
-//                 JOIN persona p ON u.persona_id = p.id
-//                 JOIN rol r ON u.rol_id = r.id
-//                 LEFT JOIN tema_subtema ts ON u.id = ts.idUsuario
-//                 LEFT JOIN subtema_ejercicio se ON u.id = se.idUsuario
-//                 WHERE r.id = 1
-//                 GROUP BY u.id, p.nombres, u.progreso
-//             `;
-
-//             sql.ejecutarResSQL(query, [], (resultado) => {
-//                 if (resultado && !resultado.error) {
-//                     const resumenFormateado = resultado.map(row => ({
-//                         idUsuario: row.idUsuario,
-//                         usuario: row.usuario,
-//                         progresoGeneral: parseFloat(row.progresoGeneral).toFixed(2),
-//                         promedioTemas: parseFloat(row.promedioTemas).toFixed(2),
-//                         promedioSubtemas: parseFloat(row.promedioSubtemas).toFixed(2),
-//                         promedioEjercicios: parseFloat(row.promedioEjercicios).toFixed(2)
-//                     }));
-
-//                     return res.status(200).send({
-//                         en: 1,
-//                         m: "Resumen de progreso de usuarios con rol_id 1 (período actual)",
-//                         resumen: resumenFormateado
-//                     });
-//                 } else {
-//                     return res.status(500).send({
-//                         en: -1,
-//                         m: "Error al obtener el resumen de progreso de usuarios con rol_id 1 (período actual)",
-//                         error: resultado.error
-//                     });
-//                 }
-//             });
-//         } else {
-//             return res.status(500).send({
-//                 en: -1,
-//                 m: "Error al obtener el periodo académico actual",
-//                 error: resultadoPeriodo.error || "No se encontraron periodos académicos"
-//             });
-//         }
-//     });
-// });
-
 router.post("/resumenProgresoUsuariosActual", [], async (req, res) => {
     const queryPeriodoActual = `
         SELECT id, 
@@ -317,7 +186,7 @@ router.post("/resumenProgresoUsuariosActual", [], async (req, res) => {
                 JOIN rol r ON u.rol_id = r.id
                 LEFT JOIN tema_subtema ts ON u.id = ts.idUsuario
                 LEFT JOIN subtema_ejercicio se ON u.id = se.idUsuario
-                WHERE r.id = 1
+                WHERE r.tipo = 'estudiante'
                 GROUP BY u.id, p.nombres, u.progreso
             `;
 

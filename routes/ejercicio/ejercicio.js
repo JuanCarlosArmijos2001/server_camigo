@@ -2,52 +2,6 @@ const router = require("express").Router();
 const sql = require("../../config/config");
 const BD = process.env.BD;
 
-//--------------------REGISTRAR EJERCICIO--------------------
-// router.post("/registrarEjercicio", [], (req, res) => {
-//     let titulo = req.body.titulo;
-//     let instrucciones = req.body.instrucciones;
-//     let restricciones = req.body.restricciones;
-//     let solucion = req.body.solucion;
-//     let retroalimentacion = req.body.retroalimentacion;
-//     let estado = 1;
-//     let idSubtema = req.body.idSubtema;
-
-//     const registrarEjercicio =
-//         "INSERT INTO ejercicio (titulo, instrucciones, restricciones, solucion, retroalimentacion, estado, idSubtema) VALUES (?, ?, ?, ?, ?, ?, ?);";
-
-//     sql.ejecutarResSQL(
-//         registrarEjercicio,
-//         [titulo, instrucciones, restricciones, solucion, retroalimentacion, estado, idSubtema],
-//         (resultado) => {
-//             if (resultado["affectedRows"] > 0) {
-//                 const idEjercicioInsertado = resultado["insertId"];
-
-//                 // Segunda consulta para insertar en subtema_ejercicio por cada usuario
-//                 const insertarEnSubtemaEjercicio =
-//                     "INSERT INTO subtema_ejercicio (idUsuario, idEjercicio) SELECT id, ? FROM usuario;";
-
-//                 sql.ejecutarResSQL(
-//                     insertarEnSubtemaEjercicio,
-//                     [idEjercicioInsertado],
-//                     (resultadoSubtemaEjercicio) => {
-//                         if (resultadoSubtemaEjercicio["affectedRows"] > 0) {
-//                             return res.status(200).send({
-//                                 en: 1,
-//                                 m: "Se registró el ejercicio con éxito",
-//                                 idEjercicio: idEjercicioInsertado,
-//                             });
-//                         } else {
-//                             return res.status(200).send({ en: -1, m: "No se pudo registrar en subtema_ejercicio porque faltan ejercicios o usuarios"  });
-//                         }
-//                     }
-//                 );
-//             } else {
-//                 return res.status(200).send({ en: -1, m: "No se pudo registrar el ejercicio" });
-//             }
-//         }
-//     );
-// });
-
 //Registrar ejercicio 
 router.post("/registrarEjercicio", [], (req, res) => {
     let titulo = req.body.titulo;

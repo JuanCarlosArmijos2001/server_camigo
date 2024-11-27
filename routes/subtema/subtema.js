@@ -2,54 +2,6 @@ const router = require("express").Router();
 const sql = require("../../config/config");
 const BD = process.env.BD;
 
-//--------------------REGISTRAR SUBTEMA--------------------
-// router.post("/registrarSubtema", [], (req, res) => {
-//     let idTema = req.body.idTema;
-//     let titulo = req.body.titulo;
-//     let objetivos = req.body.objetivos;
-//     let descripcion = req.body.descripcion;
-//     let ejemploCodigo = req.body.ejemploCodigo;
-//     let recursos = req.body.recursos;
-//     let retroalimentacion = req.body.retroalimentacion;
-//     let estado = 1;
-
-//     const registrarSubtema =
-//         "INSERT INTO subtema (titulo, objetivos, descripcion, ejemploCodigo, recursos, retroalimentacion, estado, idTema) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
-
-//     sql.ejecutarResSQL(
-//         registrarSubtema,
-//         [titulo, objetivos, descripcion, ejemploCodigo, recursos, retroalimentacion, estado, idTema],
-//         (resultado) => {
-//             if (resultado["affectedRows"] > 0) {
-//                 const idSubtemaInsertado = resultado["insertId"];
-
-//                 // Segunda consulta para insertar en usuario_subtema
-//                 const insertarEnUsuarioSubtema =
-//                     "INSERT INTO tema_subtema (idUsuario, idSubtema) SELECT id, ? FROM usuario;";
-
-//                 sql.ejecutarResSQL(
-//                     insertarEnUsuarioSubtema,
-//                     [idSubtemaInsertado],
-//                     (resultadoUsuarioSubtema) => {
-//                         if (resultadoUsuarioSubtema["affectedRows"] > 0) {
-//                             return res.status(200).send({
-//                                 en: 1,
-//                                 m: "Se registró el subtema con éxito",
-//                                 idSubtema: idSubtemaInsertado,
-//                             });
-//                         } else {
-//                             return res.status(200).send({ en: -1, m: "No se pudo registrar en usuario_subtema porque faltan subtemas o usuarios" });
-//                         }
-//                     }
-//                 );
-//             } else {
-//                 return res.status(200).send({ en: -1, m: "No se pudo registrar el subtema" });
-//             }
-//         }
-//     );
-// });
-
-
 //Registrar subtema
 router.post("/registrarSubtema", [], (req, res) => {
     let idTema = req.body.idTema;

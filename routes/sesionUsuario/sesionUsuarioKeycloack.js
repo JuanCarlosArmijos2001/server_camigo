@@ -143,7 +143,7 @@ router.post('/comprobarExistenciaDeUsuarioInternoComoUsuarioInterno', (req, res)
     const verificarExistenciaCuenta = "SELECT * FROM cuenta WHERE email = ?;";
 
     sql.ejecutarResSQL(verificarExistenciaCuenta, [email], (resultadoExistenciaCuenta) => {
-        console.log("CUENAT EXISTE")
+        console.log("CUENTA EXISTE")
         console.log(resultadoExistenciaCuenta);
         if (resultadoExistenciaCuenta.length > 0) {
             const { id: idCuenta } = resultadoExistenciaCuenta[0];
