@@ -1,19 +1,78 @@
-const nodemailer = require('nodemailer');
-var mysql = require("mysql2");
+// const nodemailer = require('nodemailer');
+// var mysql = require("mysql2");
 
-var mysqlConnection = mysql.createConnection({
+// var mysqlConnection = mysql.createConnection({
+//   host: process.env.HOST,
+//   user: process.env.USER,
+//   password: process.env.PASSWORD,
+//   database: process.env.BD,
+// });
+
+// mysqlConnection.connect((err) => {
+//   if (err) {
+//     console.log(err);
+//     throw new Error(err);
+//   } else {
+//     console.log(`CONEXION EXITOSA A LA BASE DE DATOS, BD: `, process.env.BD);
+//   }
+// });
+
+const nodemailer = require('nodemailer');
+const mysql = require("mysql2");
+const fs = require("fs");
+const path = require("path");
+
+// Configuración de conexión a MySQL
+const mysqlConnection = mysql.createConnection({
   host: process.env.HOST,
   user: process.env.USER,
   password: process.env.PASSWORD,
   database: process.env.BD,
 });
 
+// Función para inicializar la base de datos desde el archivo schema.sql
+function initializeDatabase(connection) {
+  try {
+    // Leer el archivo schema.sql
+    const schemaPath = path.join(__dirname, "schema.sql");
+    const schema = fs.readFileSync(schemaPath, "utf8");
+
+    // Separar las sentencias SQL (por punto y coma) y ejecutar una por una
+    const statements = schema
+      .split(";")
+      .filter((stmt) => stmt.trim()); // Filtra sentencias no vacías
+
+    for (const statement of statements) {
+      connection.query(statement, (err) => {
+        if (err) {
+          console.error("Error al ejecutar una sentencia SQL:", err);
+        }
+      });
+    }
+
+    console.log("La estructura de la base de datos se ha inicializado correctamente.");
+  } catch (err) {
+    console.error("Error al inicializar la base de datos:", err);
+  }
+}
+
+// Conectar y ejecutar la inicialización
+console.log(mysqlConnection);
+console.log(process.env.HOST);
+console.log(process.env.USER);
+console.log(process.env.PASSWORD);
+console.log(process.env.BD);
+
 mysqlConnection.connect((err) => {
+  
   if (err) {
+    console.error("Error al conectar a la base de datos:", err);
     throw new Error(err);
-    console.log(err);
   } else {
-    console.log(`CONEXION EXITOSA A LA BASE DE DATOS, BD: `, process.env.BD);
+    console.log(`CONEXIÓN EXITOSA A LA BASE DE DATOS: ${process.env.BD}`);
+
+    // Inicializar la base de datos
+    initializeDatabase(mysqlConnection);
   }
 });
 

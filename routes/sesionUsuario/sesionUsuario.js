@@ -3,83 +3,84 @@ const sql = require("../../config/config");
 const generarToken = require('../../middlewares/verificarToken').generarToken;
 const verificarToken = require('../../middlewares/verificarToken').verificarToken;
 const md5 = require('md5');
+
 // Verificar si existen registros en la tabla rol, si no, crear los roles por defecto
-const verificarRoles = "SELECT * FROM rol";
+// const verificarRoles = "SELECT * FROM rol";
+// console.log("Ejutando SLQ en SesionUsuario")
+// sql.ejecutarResSQL(verificarRoles, [], (resultadoRoles) => {
+//     if (resultadoRoles.length === 0) {
+//         const rolesPorDefecto = [
+//             { tipo: 'estudiante' },
+//             { tipo: 'docente' },
+//             { tipo: 'administrador' }
+//         ];
 
-sql.ejecutarResSQL(verificarRoles, [], (resultadoRoles) => {
-    if (resultadoRoles.length === 0) {
-        const rolesPorDefecto = [
-            { tipo: 'estudiante' },
-            { tipo: 'docente' },
-            { tipo: 'administrador' }
-        ];
-
-        rolesPorDefecto.forEach((rol) => {
-            const crearRol = "INSERT INTO rol (tipo) VALUES (?);";
-            sql.ejecutarResSQL(crearRol, [rol.tipo], (resultadoCrearRol) => {
-                if (resultadoCrearRol["affectedRows"] > 0) {
-                    console.log(`Rol ${rol.tipo} creado por defecto`);
-                } else {
-                    console.error(`No se pudo crear el rol ${rol.tipo} por defecto`);
-                }
-            });
-        });
-    } else {
-        console.log("Ya existen roles en la tabla");
-    }
-});
+//         rolesPorDefecto.forEach((rol) => {
+//             const crearRol = "INSERT INTO rol (tipo) VALUES (?);";
+//             sql.ejecutarResSQL(crearRol, [rol.tipo], (resultadoCrearRol) => {
+//                 if (resultadoCrearRol["affectedRows"] > 0) {
+//                     console.log(`Rol ${rol.tipo} creado por defecto`);
+//                 } else {
+//                     console.error(`No se pudo crear el rol ${rol.tipo} por defecto`);
+//                 }
+//             });
+//         });
+//     } else {
+//         console.log("Ya existen roles en la tabla");
+//     }
+// });
 
 
-// Verificar si existe un usuario administrador, si no, crear uno por defecto
-const verificarAdministrador = "SELECT * FROM usuario WHERE rol_id = (SELECT id FROM rol WHERE tipo = 'administrador')";
-verificarRoles;
-sql.ejecutarResSQL(verificarAdministrador, [], (resultadoAdministrador) => {
-    if (resultadoAdministrador.length === 0) {
-        // Crear usuario administrador por defecto
-        const nombres = 'camigoAdmin';
-        const apellidos = 'computacion';
-        const email = 'camigoAdmin@unl.edu.ec';
-        const clave = 'admin123';
-        const tipoRol = 'administrador';
+// // Verificar si existe un usuario administrador, si no, crear uno por defecto
+// const verificarAdministrador = "SELECT * FROM usuario WHERE rol_id = (SELECT id FROM rol WHERE tipo = 'administrador')";
+// verificarRoles;
+// sql.ejecutarResSQL(verificarAdministrador, [], (resultadoAdministrador) => {
+//     if (resultadoAdministrador.length === 0) {
+//         // Crear usuario administrador por defecto
+//         const nombres = 'camigoAdmin';
+//         const apellidos = 'computacion';
+//         const email = 'camigoAdmin@unl.edu.ec';
+//         const clave = 'admin123';
+//         const tipoRol = 'administrador';
 
-        // Encriptar la clave
-        const claveEncriptada = md5(clave);
+//         // Encriptar la clave
+//         const claveEncriptada = md5(clave);
 
-        // Crear una nueva cuenta
-        const crearCuenta = "INSERT INTO cuenta (email, clave) VALUES (?, ?);";
-        sql.ejecutarResSQL(crearCuenta, [email, claveEncriptada], (resultadoCuenta) => {
-            const idCuenta = resultadoCuenta.insertId;
+//         // Crear una nueva cuenta
+//         const crearCuenta = "INSERT INTO cuenta (email, clave) VALUES (?, ?);";
+//         sql.ejecutarResSQL(crearCuenta, [email, claveEncriptada], (resultadoCuenta) => {
+//             const idCuenta = resultadoCuenta.insertId;
 
-            // Crear un nuevo registro en la tabla persona
-            const crearPersona = "INSERT INTO persona (nombres, apellidos) VALUES (?, ?);";
-            sql.ejecutarResSQL(crearPersona, [nombres, apellidos], (resultadoPersona) => {
-                const idPersona = resultadoPersona.insertId;
+//             // Crear un nuevo registro en la tabla persona
+//             const crearPersona = "INSERT INTO persona (nombres, apellidos) VALUES (?, ?);";
+//             sql.ejecutarResSQL(crearPersona, [nombres, apellidos], (resultadoPersona) => {
+//                 const idPersona = resultadoPersona.insertId;
 
-                // Obtener el ID del rol de administrador
-                const obtenerIdRol = "SELECT id FROM rol WHERE tipo = ?;";
-                sql.ejecutarResSQL(obtenerIdRol, [tipoRol], (resultadoIdRol) => {
-                    if (resultadoIdRol.length > 0) {
-                        const idRol = resultadoIdRol[0].id;
+//                 // Obtener el ID del rol de administrador
+//                 const obtenerIdRol = "SELECT id FROM rol WHERE tipo = ?;";
+//                 sql.ejecutarResSQL(obtenerIdRol, [tipoRol], (resultadoIdRol) => {
+//                     if (resultadoIdRol.length > 0) {
+//                         const idRol = resultadoIdRol[0].id;
 
-                        // Crear un nuevo usuario
-                        const crearUsuario = "INSERT INTO usuario (persona_id, cuenta_id, rol_id) VALUES (?, ?, ?);";
-                        sql.ejecutarResSQL(crearUsuario, [idPersona, idCuenta, idRol], (resultadoUsuario) => {
-                            if (resultadoUsuario["affectedRows"] > 0) {
-                                console.log("Usuario administrador creado por defecto");
-                            } else {
-                                console.error("No se pudo crear el usuario administrador por defecto");
-                            }
-                        });
-                    } else {
-                        console.error("No se encontró el rol de administrador");
-                    }
-                });
-            });
-        });
-    } else {
-        console.log("Ya existe un usuario administrador");
-    }
-});
+//                         // Crear un nuevo usuario
+//                         const crearUsuario = "INSERT INTO usuario (persona_id, cuenta_id, rol_id) VALUES (?, ?, ?);";
+//                         sql.ejecutarResSQL(crearUsuario, [idPersona, idCuenta, idRol], (resultadoUsuario) => {
+//                             if (resultadoUsuario["affectedRows"] > 0) {
+//                                 console.log("Usuario administrador creado por defecto");
+//                             } else {
+//                                 console.error("No se pudo crear el usuario administrador por defecto");
+//                             }
+//                         });
+//                     } else {
+//                         console.error("No se encontró el rol de administrador");
+//                     }
+//                 });
+//             });
+//         });
+//     } else {
+//         console.log("Ya existe un usuario administrador");
+//     }
+// });
 
 router.post('/validarClave', (req, res) => {
     const { userId, claveActual } = req.body;

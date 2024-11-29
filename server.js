@@ -59,7 +59,7 @@ app.use('/valoracion', valoracion);
 app.use('/sesionUsuarioKeycloak', sesionUsuarioKeycloak);
 
 const server = app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`Servidor en escucha en el puerto: ${port}`)
 });
 
 module.exports = { server, app };
